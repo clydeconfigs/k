@@ -43,6 +43,16 @@ remove() {
 		}
 	}
 }
+edit() {
+	found=$(get $1 | grep found: | sed 's/found: //') && {
+		$EDITOR /mnt/kdatabase/$found 
+	}
+}
+rename() {
+	found=$(get $1 | grep found: | sed 's/found: //') && {
+		mv /mnt/kdatabase/$found /mnt/kdatabase/$2
+	}
+}
 get() {
   open || exit 1
   found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
@@ -62,6 +72,9 @@ case $1 in
 	"list") list;;
 	"add") add;;
 	"remove") remove $2;;
+	"edit") edit $2;;
+	"rename") rename $2 $3;;
 	"pass") get $2 1;;
 	"login") get $2 2;;
+	*) exit 2;;
 esac
