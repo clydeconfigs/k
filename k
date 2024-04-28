@@ -33,10 +33,21 @@ add() {
 	echo -n "pass: "; read pass
 	echo -e "$pass\n$login" > /mnt/kdatabase/$title
 }
+remove() {
+	found=$(get $1 | grep found: | sed 's/found: //') && {
+		read -p "are you sure you want to remove $found? (y/n): " r
+		[[ $r =~ ^(Y|y|yes)$ ]] && { 
+			rm /mnt/kdatabase/$found; echo "removed"; 
+		} || {
+			echo "canceled"
+		}
+	}
+}
 get() {
   open || exit 1
   found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
   found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n ${2}p; return 0; }
+  return 1
 }
 
 test -z $kdatabase && {
@@ -50,6 +61,7 @@ case $1 in
 	"create") create;;
 	"list") list;;
 	"add") add;;
+	"remove") remove $2;;
 	"pass") get $2 1;;
 	"login") get $2 2;;
 esac
