@@ -16,11 +16,24 @@ open() {
 }
 list() {
 	open || exit 1
-	ls /mnt/k_database
+	for file in /mnt/k_database/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
+	
 }
 add() {
 	open || exit 1
-	touch /mnt/k_database/$RANDOM$RANDOM
+	echo -n "title: "; read title
+	echo -n "login: "; read login
+	echo -n "pass: "; read pass
+	echo -e "$pass\n$login" > /mnt/k_database/$title
+}
+pass() {
+	open || exit 1
+	echo "found: $(grep -rl $1 /mnt/k_database/* | sed 's#.*/##')"
+	cat $(grep -rl $1 /mnt/k_database/*) | sed -n 1p
+}
+login() {
+	open || exit 1
+	cat $(grep -rl $1 /mnt/k_database/*) | sed -n 2p
 }
 
 database=cornflakes
@@ -30,4 +43,6 @@ case $1 in
 	"create") create;;
 	"list") list;;
 	"add") add;;
+	"pass") pass $2;;
+	"login") login $2;;
 esac
