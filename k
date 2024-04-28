@@ -4,14 +4,21 @@ create() {
 	truncate -s 30M $database
 	cryptsetup luksFormat $database
 	sudo cryptsetup luksOpen $database k_database
-	sudo mkfs.ext4 /dev/mapper/k_database
+	sudo mkfs.ext4 /dev/mapper/k_database || return 1
+	return 0
 }
 open() {
 	sudo cryptsetup luksOpen $database k_database 2>/dev/null && {
 		sudo mkdir /mnt/k_database 2>/dev/null
+		sudo chmod 700 /mnt/k_database
 		sudo chown -R $USER:$USER /mnt/k_database
-		sudo mount /dev/mapper/k_database /mnt/k_database || exit 1
+		sudo mount /dev/mapper/k_database /mnt/k_database || return 1
 	}
+	return 0
+}
+close() {
+	sudo umount /mnt/k_database
+	sudo cryptsetup luksClose k_database || return 1
 	return 0
 }
 list() {
@@ -36,10 +43,14 @@ login() {
 	cat $(grep -rl $1 /mnt/k_database/*) | sed -n 2p
 }
 
-database=cornflakes
+test -z $database && {
+	echo "set full path for environment variable \$database, defaulting to \"\$HOME/cornflakes\""
+	database=$HOME/cornflakes
+}
 
 case $1 in
 	"open") open;;
+	"close") close;;
 	"create") create;;
 	"list") list;;
 	"add") add;;
