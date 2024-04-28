@@ -33,15 +33,10 @@ add() {
 	echo -n "pass: "; read pass
 	echo -e "$pass\n$login" > /mnt/kdatabase/$title
 }
-pass() {
-	open || exit 1
-	found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n 1p; return 0; }
-	found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n 1p; return 0; }
-}
-login() {
-	open || exit 1
-	found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n 2p; return 0; }
-	found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n 2p; return 0; }
+get() {
+  open || exit 1
+  found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
+  found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n ${2}p; return 0; }
 }
 
 test -z $kdatabase && {
@@ -55,6 +50,6 @@ case $1 in
 	"create") create;;
 	"list") list;;
 	"add") add;;
-	"pass") pass $2;;
-	"login") login $2;;
+	"pass") get $2 1;;
+	"login") get $2 2;;
 esac
