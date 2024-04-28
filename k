@@ -32,7 +32,7 @@ generate() {
 	login=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}')
 	pass=$(tr -dc [:graph:] < /dev/urandom | head -c 20)
 	echo -e "$pass\n$login" > /mnt/kdatabase/$title
-	echo "$title generated"
+	echo -e "\e[32m$title generated\e[0m"
 }
 add() {
 	open || exit 1
@@ -40,6 +40,7 @@ add() {
 	echo -n "login: "; read login
 	echo -n "pass: "; read pass
 	echo -e "$pass\n$login" > /mnt/kdatabase/$title
+	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
 	found=$(get $1 | grep found: | sed 's/found: //') && {
@@ -67,7 +68,9 @@ get() {
   found=$(ls /mnt/kdatabase | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n ${2}p; return 0; }
   return 1
 }
-
+copy() {
+  get $1 2 | tail -n1 | tr -d '\n' | xclip -sel c
+}
 test -z $kdatabase && {
 	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
 	kdatabase=$HOME/cornflakes
@@ -83,7 +86,9 @@ case $1 in
 	"remove") remove $2;;
 	"edit") edit $2;;
 	"rename") rename $2 $3;;
-	"pass") get $2 1;;"get") get $2 1;;
+	"pass") get $2 1;;
 	"login") get $2 2;;
+	"get") get $2 1;;
+	"copy") copy $2;;
 	*) exit 2;;
 esac
