@@ -35,12 +35,13 @@ add() {
 }
 pass() {
 	open || exit 1
-	echo "found: $(grep -rl $1 /mnt/kdatabase/* | sed 's#.*/##')"
-	cat $(grep -rl $1 /mnt/kdatabase/*) | sed -n 1p
+	found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n 1p; return 0; }
+	found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n 1p; return 0; }
 }
 login() {
 	open || exit 1
-	cat $(grep -rl $1 /mnt/kdatabase/*) | sed -n 2p
+	found=$(grep -rl $1 /mnt/kdatabase/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n 2p; return 0; }
+	found=$(ls /mnt/kdatabase | grep $1 | head -n1) && { echo "found: $found"; cat /mnt/kdatabase/$found | sed -n 2p; return 0; }
 }
 
 test -z $kdatabase && {
