@@ -1,6 +1,6 @@
 install:
-	chmod +x k
-	sudo cp k /usr/local/bin
+	chmod +x k k_menu
+	sudo cp k k_menu /usr/local/bin
 		
 uninstall:
-	sudo rm /usr/local/bin/k
+	sudo rm /usr/local/bin/k /usr/local/bin/k_menu

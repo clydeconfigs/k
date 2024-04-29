@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+
+#
+# CC BY-NC-SA 4.0 Deed 
+# k_menu, a work by clyde
+#
+
+# example usage: 
+# $ bash k_menu "rofi -dmenu"
+# $ bash k_menu dmenu
+
+menu=$1
+test -z $1 && exit 1
+
+main_menu=$(echo -e "try+open\nclose+open" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
+
+case $main_menu in
+    "try+open")
+        return;;
+    "close+open")
+        k close;;
+    *)
+        exit 1;;
+esac
+
+entry=$(k list | sed 1d | awk '{print $1" "$2}' 2>/dev/null | $menu | awk '{print $2}' ) || exit 1
+
+password=$(k get $entry | tail -n1)
+login=$entry
+# totp=$(k totp $entry)
+
+choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[enter]password" | $menu) || exit 1
+
+{
+case $choice in
+    "login+password")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        sleep 0.05
+        xdotool key Tab
+        sleep 0.05
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "login[enter]password")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        sleep 0.05
+        xdotool key Enter
+        sleep 1.1
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "password")
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "login")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "totp")
+        for (( i=0; i<${#totp}; i++ )); do
+            char="${totp:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+esac
+
+notify-send "done typing, you may press enter"
+
+} &
+
+
