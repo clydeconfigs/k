@@ -87,7 +87,23 @@ test -z $kdatabase && {
 	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
 	kdatabase=$HOME/cornflakes
 }
-
+usage() {
+	echo -e "
+ \033[1mopen\033[0m: opens the encrypted database
+ \033[1mclose\033[0m: closes the encrypted database
+ \033[1mcreate\033[0m: creates a new encrypted database
+ \033[1mlist\033[0m: lists all entries in the encrypted database
+ \033[1mgenerate\033[0m: generates a new entry in the encrypted database
+ \033[1madd\033[0m: adds a new entry to the encrypted database
+ \033[1mremove\033[0m: removes an entry from the encrypted database
+ \033[1medit\033[0m: allows editing an existing entry in the encrypted database
+ \033[1mrename\033[0m: renames an existing entry in the encrypted database
+ \033[1mpass\033[0m: retrieves the password for a specific entry
+ \033[1mlogin\033[0m: retrieves the login username for a specific entry
+ \033[1mget\033[0m: retrieves information for a specific entry
+ \033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
+ 	"
+}
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-16)
 
 case $1 in
@@ -104,5 +120,5 @@ case $1 in
 	"login") get $2 2;;
 	"get") get $2 1;;
 	"copy") copy $2;;
-	*) exit 2;;
+	*) usage; exit 2;;
 esac
