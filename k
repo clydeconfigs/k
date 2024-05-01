@@ -1,5 +1,15 @@
 #!/usr/bin/bash
 
+check() {
+	test ! -e /dev/mapper/$kdatabaseid && {
+		open
+		exit 1
+	}
+	test -z "$(ls /mnt/$kdatabaseid)" && {
+		echo -e "\033[0;31mno entries yet... create one to list them\033[0m"
+		exit 1
+	}
+}
 mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found() {
 	sudo mkdir /mnt/$kdatabaseid 2>/dev/null
 	sudo mount /dev/mapper/$kdatabaseid /mnt/$kdatabaseid || return 1
@@ -13,6 +23,7 @@ create() {
 	sudo cryptsetup luksOpen $kdatabase $kdatabaseid
 	sudo mkfs.ext4 /dev/mapper/$kdatabaseid
 	mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
+	generate genesis
 	return 0
 }
 open() {
@@ -28,9 +39,9 @@ close() {
 	return 0
 }
 list() {
+	check
 	open || exit 1
 	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
-	
 }
 generate() {
 	test -z $1 && exit 1
@@ -54,56 +65,62 @@ add() {
 	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
+	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			rm /mnt/$kdatabaseid/$found; echo "removed"; 
+			rm /mnt/$kdatabaseid/$found; echo -e "\e[32mremoved\e[0m"; 
 		} || {
-			echo "canceled"
+			echo "\033[0;31mcanceled\033[0m"
 		}
 	}
 }
 edit() {
+	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
 		$EDITOR /mnt/$kdatabaseid/$found 
 	}
 }
 rename() {
+	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
 		mv /mnt/$kdatabaseid/$found /mnt/$kdatabaseid/$2
 	}
 }
 get() {
-  open || exit 1
-  found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
-  found=$(ls /mnt/$kdatabaseid | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/$kdatabaseid/$found | sed -n ${2}p; return 0; }
-  return 1
+	check
+	open || exit 1
+	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
+	found=$(ls /mnt/$kdatabaseid | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/$kdatabaseid/$found | sed -n ${2}p; return 0; }
+	return 1
 }
 copy() {
-  get $1 2 | tail -n1 | tr -d '\n' | xclip -sel c
+	check
+	get $1 2 | tail -n1 | tr -d '\n' | xclip -sel c
+}
+usage() {
+	echo -e "
+\033[1mopen\033[0m: opens the encrypted database
+\033[1mclose\033[0m: closes the encrypted database
+\033[1mcreate\033[0m: creates a new encrypted database
+\033[1mlist\033[0m: lists all entries in the encrypted database
+\033[1mgenerate\033[0m: generates a new entry in the encrypted database
+\033[1madd\033[0m: adds a new entry to the encrypted database
+\033[1mremove\033[0m: removes an entry from the encrypted database
+\033[1medit\033[0m: allows editing an existing entry in the encrypted database
+\033[1mrename\033[0m: renames an existing entry in the encrypted database
+\033[1mpass\033[0m: retrieves the password for a specific entry
+\033[1mlogin\033[0m: retrieves the login username for a specific entry
+\033[1mget\033[0m: retrieves information for a specific entry
+\033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
+ 	"
 }
 
 test -z $kdatabase && {
 	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
 	kdatabase=$HOME/cornflakes
 }
-usage() {
-	echo -e "
- \033[1mopen\033[0m: opens the encrypted database
- \033[1mclose\033[0m: closes the encrypted database
- \033[1mcreate\033[0m: creates a new encrypted database
- \033[1mlist\033[0m: lists all entries in the encrypted database
- \033[1mgenerate\033[0m: generates a new entry in the encrypted database
- \033[1madd\033[0m: adds a new entry to the encrypted database
- \033[1mremove\033[0m: removes an entry from the encrypted database
- \033[1medit\033[0m: allows editing an existing entry in the encrypted database
- \033[1mrename\033[0m: renames an existing entry in the encrypted database
- \033[1mpass\033[0m: retrieves the password for a specific entry
- \033[1mlogin\033[0m: retrieves the login username for a specific entry
- \033[1mget\033[0m: retrieves information for a specific entry
- \033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
- 	"
-}
+
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-16)
 
 case $1 in
