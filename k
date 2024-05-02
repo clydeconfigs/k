@@ -3,7 +3,6 @@
 check() {
 	test ! -e /dev/mapper/$kdatabaseid && {
 		open
-		exit 1
 	}
 	test -z "$(ls /mnt/$kdatabaseid)" && {
 		echo -e "\033[0;31mno entries yet... create one to list them\033[0m"
@@ -41,7 +40,7 @@ close() {
 list() {
 	check
 	open || exit 1
-	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
+	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done
 }
 generate() {
 	test -z $1 && exit 1
@@ -69,7 +68,7 @@ remove() {
 	found=$(get $1 | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			rm /mnt/$kdatabaseid/$found; echo -e "\e[32mremoved\e[0m"; 
+			rm /mnt/$kdatabaseid/"$found"; echo -e "\e[32mremoved\e[0m"; 
 		} || {
 			echo "\033[0;31mcanceled\033[0m"
 		}
@@ -78,20 +77,20 @@ remove() {
 edit() {
 	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
-		$EDITOR /mnt/$kdatabaseid/$found 
+		$EDITOR /mnt/$kdatabaseid/"$found" 
 	}
 }
 rename() {
 	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
-		mv /mnt/$kdatabaseid/$found /mnt/$kdatabaseid/$2
+		mv /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/$2
 	}
 }
 get() {
 	check
 	open || exit 1
-	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { echo "found: $(echo $found | sed 's#.*/##')"; cat $found | sed -n ${2}p; return 0; }
-	found=$(ls /mnt/$kdatabaseid | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/$kdatabaseid/$found | sed -n ${2}p; return 0; }
+	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
+	found=$(ls /mnt/$kdatabaseid | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
 	return 1
 }
 copy() {
@@ -127,7 +126,8 @@ case $1 in
 	"open") open;;
 	"close") close;;
 	"create") create;;
-	"list") list;;
+	"list") list | column -t -s $'\t';;
+	"list_menu") list;;
 	"generate") generate $2;;
 	"add") add;;
 	"remove") remove $2;;

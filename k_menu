@@ -12,21 +12,28 @@
 menu=$1
 test -z $1 && exit 1
 
-main_menu=$(echo -e "try+open\nclose+open" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
+main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0)
 
-case $main_menu in
-    "try+open")
-        return;;
-    "close+open")
-        k close;;
-    *)
-        exit 1;;
-esac
+test -z $kdatabase && {
+	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
+	kdatabase=$HOME/cornflakes
+}
 
-entry=$(k list | sed 1d | awk '{print $1" "$2}' 2>/dev/null | $menu | awk '{print $2}' ) || exit 1
+kdatabaseid="$(echo $kdatabase | b2sum | cut -b1-6)$(basename $kdatabase)"
 
-password=$(k get $entry | tail -n1)
-login=$entry
+if test ! -e /dev/mapper/$kdatabaseid; then
+    st -e k open || { 
+        k close
+        exit 1
+    }
+fi
+
+array1=($(k list_menu | awk -F $'\t' '{print $1}'))
+logins=($(k list_menu | awk -F $'\t' '{print $2}'))
+
+entry=$(k list_menu | awk -F $'\t' '{print $1" "$2}' | nl -s '. ' -w 1 | sed 1d 2>/dev/null | $menu | awk -F '.' '{print $1}') || exit 1
+password=$(k get $entry | awk -F $'\t' '{print $1}'| tail -n1)
+login=$(${words[$entry]})
 # totp=$(k totp $entry)
 
 choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[enter]password" | $menu) || exit 1
