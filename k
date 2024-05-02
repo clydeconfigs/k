@@ -64,7 +64,7 @@ generate() {
 add() {
 	open || exit 1
 	echo -n "title: "; read -r title
-	test -e /mnt/$kdatabaseid/$title && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+	test -e /mnt/$kdatabaseid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -n "login: "; read -r login
 	echo -n "pass: "; read -sr pass
 
@@ -94,6 +94,7 @@ edit() {
 rename() {
 	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
+		test -e /mnt/$kdatabaseid/"$found" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		mv /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
 	}
 }

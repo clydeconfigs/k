@@ -15,11 +15,10 @@ test -z $1 && exit 1
 main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
 
 test -z $kdatabase && {
-	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
 	kdatabase=$HOME/cornflakes
 }
 
-kdatabaseid="$(echo $kdatabase | b2sum | cut -b1-6)$(basename $kdatabase)"
+kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)$(basename $kdatabase)
 
 if test ! -e /dev/mapper/$kdatabaseid; then
     st -e k open || { 
