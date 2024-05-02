@@ -12,7 +12,7 @@
 menu=$1
 test -z $1 && exit 1
 
-main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0)
+main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
 
 test -z $kdatabase && {
 	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
@@ -31,7 +31,10 @@ fi
 titles=$(k list_menu | awk -F $'\t' '{print $1}')
 logins=$(k list_menu | awk -F $'\t' '{print $2}')
 
-entry=$(k list_menu | awk -F $'\t' '{print $1" "$2}' | nl -s '. ' -w 1 | sed 1d 2>/dev/null | $menu | awk -F '.' '{print $1}') || exit 1
+entry=$(k list_menu | awk -F $'\t' '{print $1" "$2}' | nl -s '. ' -w 1 | $menu | awk -F '.' '{print $1}')
+
+test -z "$entry" && exit 1
+
 entrytitle=$(echo "$titles" | sed -n ${entry}p)
 login=$(echo "$logins" | sed -n ${entry}p)
 password=$(k get "$entrytitle" | tail -n1)

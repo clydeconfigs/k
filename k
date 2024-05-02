@@ -40,7 +40,12 @@ close() {
 list() {
 	check
 	open || exit 1
-	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done
+	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
+}
+list_menu() {
+	check
+	open || exit 1
+	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
 	tr -dc [:alnum:] < /dev/urandom | head -c 30
@@ -131,8 +136,8 @@ case $1 in
 	"open") open;;
 	"close") close;;
 	"create") create;;
-	"list") list | column -t -s $'\t';;
-	"list_menu") list;;
+	"list") list;;
+	"list_menu") list_menu;;
 	"generate") generate $2;;
 	"add") add;;
 	"remove") remove $2;;
