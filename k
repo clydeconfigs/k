@@ -42,25 +42,31 @@ list() {
 	open || exit 1
 	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done
 }
+genkey() {
+	tr -dc [:alnum:] < /dev/urandom | head -c 30
+}
+genusername() {
+	awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'
+}
 generate() {
 	test -z $1 && exit 1
 	title=$1
-	login=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}')
-	pass=$(tr -dc [:graph:] < /dev/urandom | head -c 20)
-	echo -e "$pass\n$login" > /mnt/$kdatabaseid/$title
+	login=$(genusername)
+	pass=$(genkey)
+	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32m$title generated\e[0m"
 }
 add() {
 	open || exit 1
-	echo -n "title: "; read title
+	echo -n "title: "; read -r title
 	test -e /mnt/$kdatabaseid/$title && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
-	echo -n "login: "; read login
-	echo -n "pass: "; read pass
+	echo -n "login: "; read -r login
+	echo -n "pass: "; read -sr pass
 
-	[ "$pass" = "g" ] && pass=$(tr -dc [:graph:] < /dev/urandom | head -c 20)
-	[ "$login" = "g" ] && login=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}')
+	[ "$login" = "g" ] && login=$(genusername)
+	[ "$pass" = "g" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login" > /mnt/$kdatabaseid/$title
+	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
@@ -83,7 +89,7 @@ edit() {
 rename() {
 	check
 	found=$(get $1 | grep found: | sed 's/found: //') && {
-		mv /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/$2
+		mv /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
 	}
 }
 get() {
@@ -116,11 +122,10 @@ usage() {
 }
 
 test -z $kdatabase && {
-	echo -e "\033[90mdefaulting to kdatabase=\$HOME/cornflakes\033[0m"
 	kdatabase=$HOME/cornflakes
 }
 
-kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-16)
+kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)$(basename $kdatabase)
 
 case $1 in
 	"open") open;;
