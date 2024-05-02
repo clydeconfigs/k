@@ -55,6 +55,7 @@ genusername() {
 }
 generate() {
 	test -z $1 && exit 1
+	test -e /mnt/$kdatabaseid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	title=$1
 	login=$(genusername)
 	pass=$(genkey)
@@ -101,8 +102,8 @@ rename() {
 get() {
 	check
 	open || exit 1
-	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
-	found=$(ls /mnt/$kdatabaseid | grep -i $1 | head -n1) && { echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
+	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { found=$(echo "$found" | head -n1); echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
+	found=$(ls /mnt/$kdatabaseid | grep -i $1) && { found=$(echo "$found" | head -n1); echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
 	return 1
 }
 copy() {
