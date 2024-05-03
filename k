@@ -54,9 +54,9 @@ genusername() {
 	awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'
 }
 generate() {
-	test -z $1 && exit 1
+	test -z "$1" && exit 1
 	test -e /mnt/$kdatabaseid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
-	title=$1
+	title="$1"
 	login=$(genusername)
 	pass=$(genkey)
 	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
@@ -77,7 +77,7 @@ add() {
 }
 remove() {
 	check
-	found=$(get $1 | grep found: | sed 's/found: //') && {
+	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
 			rm /mnt/$kdatabaseid/"$found"; echo -e "\e[32mremoved\e[0m"; 
@@ -88,13 +88,13 @@ remove() {
 }
 edit() {
 	check
-	found=$(get $1 | grep found: | sed 's/found: //') && {
+	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		$EDITOR /mnt/$kdatabaseid/"$found" 
 	}
 }
 rename() {
 	check
-	found=$(get $1 | grep found: | sed 's/found: //') && {
+	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		test -e /mnt/$kdatabaseid/"$found" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		mv /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
 	}
@@ -102,13 +102,13 @@ rename() {
 get() {
 	check
 	open || exit 1
-	found=$(grep -irl $1 /mnt/$kdatabaseid/*) && { found=$(echo "$found" | head -n1); echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
-	found=$(ls /mnt/$kdatabaseid | grep -i $1) && { found=$(echo "$found" | head -n1); echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
+	found=$(ls /mnt/$kdatabaseid | grep -i "$1") && { found=$(echo "$found" | head -n1); echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
+	found=$(grep -irl "$1" /mnt/$kdatabaseid/*) && { found=$(echo "$found" | head -n1); echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
 	return 1
 }
 copy() {
 	check
-	get $1 2 | tail -n1 | tr -d '\n' | xclip -sel c
+	get "$1" 2 | tail -n1 | tr -d '\n' | xclip -sel c
 }
 usage() {
 	echo -e "
@@ -134,7 +134,7 @@ test -z $kdatabase && {
 
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)$(basename $kdatabase)
 
-case $1 in
+case "$1" in
 	"open") open;;
 	"close") close;;
 	"create") create;;
