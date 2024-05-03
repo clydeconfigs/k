@@ -68,11 +68,12 @@ add() {
 	test -e /mnt/$kdatabaseid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -n "login: "; read -r login
 	echo -n "pass: "; read -sr pass
-
+	echo -n "totp: "; read -sr totp
+	
 	[ "$login" = "gen" ] && login=$(genusername)
 	[ "$pass" = "gen" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
+	echo -e "$pass\n$login\n$totp" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
@@ -147,6 +148,7 @@ case "$1" in
 	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;
 	"pass") get "$2" 1;;"get") get "$2" 1;;
 	"login") get "$2" 2;;
+	"totp") oathtool -b --totp $(get "$2" 3 | tail -n1);;
 	"copy") copy "$2";;
 	*) usage; exit 2;;
 esac
