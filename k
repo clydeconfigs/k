@@ -48,7 +48,7 @@ list_menu() {
 	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
-	tr -dc [:alnum:] < /dev/urandom | head -c 30
+	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
 }
 genusername() {
 	awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'
@@ -69,8 +69,8 @@ add() {
 	echo -n "login: "; read -r login
 	echo -n "pass: "; read -sr pass
 
-	[ "$login" = "g" ] && login=$(genusername)
-	[ "$pass" = "g" ] && pass=$(genkey)
+	[ "$login" = "gen" ] && login=$(genusername)
+	[ "$pass" = "gen" ] && pass=$(genkey)
 
 	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32mentry added\e[0m"
@@ -115,15 +115,15 @@ usage() {
 \033[1mopen\033[0m: opens the encrypted database
 \033[1mclose\033[0m: closes the encrypted database
 \033[1mcreate\033[0m: creates a new encrypted database
-\033[1mlist\033[0m: lists all entries in the encrypted database
-\033[1mgenerate\033[0m: generates a new entry in the encrypted database
-\033[1madd\033[0m: adds a new entry to the encrypted database
-\033[1mremove\033[0m: removes an entry from the encrypted database
-\033[1medit\033[0m: allows editing an existing entry in the encrypted database
-\033[1mrename\033[0m: renames an existing entry in the encrypted database
+\033[1mlist\033[0m: lists all entries
+\033[1mgenerate\033[0m: generates a new entry
+\033[1madd\033[0m: adds a new entry
+\033[1mremove\033[0m: removes an entry
+\033[1medit\033[0m: allows editing an existing entry
+\033[1mrename/move\033[0m: renames an existing entry
 \033[1mpass\033[0m: retrieves the password for a specific entry
 \033[1mlogin\033[0m: retrieves the login username for a specific entry
-\033[1mget\033[0m: retrieves information for a specific entry
+\033[1mpass/get\033[0m: retrieves information for a specific entry
 \033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
  	"
 }
@@ -144,10 +144,9 @@ case $1 in
 	"add") add;;
 	"remove") remove $2;;
 	"edit") edit $2;;
-	"rename") rename $2 $3;;
-	"pass") get $2 1;;
+	"rename") rename $2 $3;;"move") rename $2 $3;;
+	"pass") get $2 1;;"get") get $2 1;;
 	"login") get $2 2;;
-	"get") get $2 1;;
 	"copy") copy $2;;
 	*) usage; exit 2;;
 esac
