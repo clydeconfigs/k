@@ -132,7 +132,7 @@ test -z $kdatabase && {
 	kdatabase=$HOME/cornflakes
 }
 
-kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)$(basename $kdatabase)
+kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
 
 case "$1" in
 	"open") open;;

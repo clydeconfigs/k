@@ -18,7 +18,7 @@ test -z $kdatabase && {
 	kdatabase=$HOME/cornflakes
 }
 
-kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)$(basename $kdatabase)
+kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
 
 if test ! -e /dev/mapper/$kdatabaseid; then
     st -e k open || { 
