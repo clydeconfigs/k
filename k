@@ -22,7 +22,7 @@ create() {
 	sudo cryptsetup luksOpen $kdatabase $kdatabaseid
 	sudo mkfs.ext4 /dev/mapper/$kdatabaseid
 	mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
-	generate genesis
+	generate example
 	return 0
 }
 open() {
@@ -54,9 +54,9 @@ genusername() {
 	awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'
 }
 generate() {
-	test -z "$1" && exit 1
+	test -z "$@" && exit 1
 	test -e /mnt/$kdatabaseid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
-	title="$1"
+	title="$@"
 	login=$(genusername)
 	pass=$(genkey)
 	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
@@ -140,13 +140,13 @@ case "$1" in
 	"create") create;;
 	"list") list;;
 	"list_menu") list_menu;;
-	"generate") generate $2;;
+	"generate") generate "${@:2}";;
 	"add") add;;
-	"remove") remove $2;;
-	"edit") edit $2;;
-	"rename") rename $2 $3;;"move") rename $2 $3;;
-	"pass") get $2 1;;"get") get $2 1;;
-	"login") get $2 2;;
-	"copy") copy $2;;
+	"remove") remove "$2";;
+	"edit") edit "$2";;
+	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;
+	"pass") get "$2" 1;;"get") get "$2" 1;;
+	"login") get "$2" 2;;
+	"copy") copy "$2";;
 	*) usage; exit 2;;
 esac
