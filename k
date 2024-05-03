@@ -108,7 +108,7 @@ get() {
 }
 copy() {
 	check
-	get "$1" 2 | tail -n1 | tr -d '\n' | xclip -sel c
+	get "$1" 1 | tail -n1 | tr -d '\n' | xclip -sel c
 }
 usage() {
 	echo -e "
