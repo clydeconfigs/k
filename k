@@ -136,7 +136,7 @@ usage() {
 }
 
 test -z $kdatabase && {
-	kdatabase=$HOME/cornflakes
+	source $HOME/.config/k
 }
 
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)

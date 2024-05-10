@@ -15,7 +15,7 @@ test -z $1 && exit 1
 main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
 
 test -z $kdatabase && {
-	kdatabase=$HOME/cornflakes
+	source $HOME/.config/k
 }
 
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
