@@ -40,7 +40,7 @@ close() {
 list() {
 	check
 	open || exit 1
-	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %W "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
+	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
 }
 list_menu() {
 	check
@@ -150,5 +150,6 @@ case "$1" in
 	"login") get "$2" 2;;
 	"totp") oathtool -b --totp $(get "$2" 3 | tail -n1);;
 	"copy") copy "$2";;
+	"gen") genusername; echo; genkey; echo;;
 	*) usage; exit 2;;
 esac
