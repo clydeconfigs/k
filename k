@@ -59,7 +59,8 @@ generate() {
 	title="$@"
 	login=$(genusername)
 	pass=$(genkey)
-	echo -e "$pass\n$login" > /mnt/$kdatabaseid/"$title"
+	totp=$(head -c 10 /dev/urandom | base32)
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32m$title generated\e[0m"
 }
 add() {
@@ -73,7 +74,7 @@ add() {
 	[ "$login" = "gen" ] && login=$(genusername)
 	[ "$pass" = "gen" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login\n$totp" > /mnt/$kdatabaseid/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
 	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
@@ -110,6 +111,11 @@ get() {
 copy() {
 	check
 	get "$1" 1 | tail -n1 | tr -d '\n' | xclip -sel c
+}
+totp() {
+	which=$(get "$1" 3)
+	echo "$which" | head -n1
+	oathtool -b --totp $(echo -n "$which" | tail -n1)
 }
 usage() {
 	echo -e "
@@ -148,7 +154,7 @@ case "$1" in
 	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;
 	"pass") get "$2" 1;;"get") get "$2" 1;;
 	"login") get "$2" 2;;
-	"totp") oathtool -b --totp $(get "$2" 3 | tail -n1);;
+	"totp") totp "$2";;
 	"copy") copy "$2";;
 	"gen") genusername; echo; genkey; echo;;
 	*) usage; exit 2;;
