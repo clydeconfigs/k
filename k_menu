@@ -39,7 +39,7 @@ login=$(echo "$logins" | sed -n ${entry}p)
 password=$(k get "$entrytitle" | tail -n1)
 totp=$(k totp "$entrytitle")
 
-choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[enter]password" | $menu) || exit 1
+choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
 
 {
 case $choice in
@@ -56,14 +56,12 @@ case $choice in
             xdotool type "$char"
         done
         ;;
-    "login[enter]password")
+    "login[pause]password")
         for (( i=0; i<${#login}; i++ )); do
             char="${login:$i:1}"
             xdotool type "$char"
         done
-        sleep 0.05
-        xdotool key Enter
-        sleep 1.1
+        echo "continue" | $menu || exit 1
         for (( i=0; i<${#password}; i++ )); do
             char="${password:$i:1}"
             xdotool type "$char"
