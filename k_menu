@@ -61,7 +61,9 @@ case $choice in
             char="${login:$i:1}"
             xdotool type "$char"
         done
-        echo "continue" | $menu || exit 1
+        sleep 0.05
+        xdotool key Enter
+        echo "wait until done and continue" | $menu || exit 1
         for (( i=0; i<${#password}; i++ )); do
             char="${password:$i:1}"
             xdotool type "$char"
