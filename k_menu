@@ -40,7 +40,7 @@ login=$(echo "$logins" | sed -n ${entry}p)
 password=$(k get "$entrytitle" | tail -n1)
 totp=$(k totp "$entrytitle")
 
-choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
+choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
 
 {
 case $choice in
