@@ -42,6 +42,14 @@ totp=$(k totp "$entrytitle")
 
 choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
 
+enter_prompt() {
+    continue=$(echo -e "press enter\ncancel" | rofi -dmenu)
+    case "$continue" in
+        "press enter") sleep 0.3; xdotool key Return;;
+        "cancel") exit 1;;
+    esac
+}
+
 {
 case $choice in
     "login+password")
@@ -69,12 +77,14 @@ case $choice in
             char="${password:$i:1}"
             xdotool type "$char"
         done
+        enter_prompt
         ;;
     "password")
         for (( i=0; i<${#password}; i++ )); do
             char="${password:$i:1}"
             xdotool type "$char"
         done
+        enter_prompt
         ;;
     "login")
         for (( i=0; i<${#login}; i++ )); do
@@ -90,7 +100,7 @@ case $choice in
         ;;
 esac
 
-notify-send "done typing, you may press enter"
+# notify-send "done typing, you may press enter"
 
 } &
 
