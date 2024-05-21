@@ -37,12 +37,34 @@ close() {
 	sudo cryptsetup luksClose $kdatabaseid || return 1
 	return 0
 }
-list() {
+list_abc() {
 	check
 	open || exit 1
 	{
 		echo -e "\033[1mtitle\tusername\tcreation\tmodification\033[0m"
-		for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"; echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"; done 
+		for file in /mnt/$kdatabaseid/*; do
+			echo -ne "$(basename "$file")\t"
+			echo -n $(sed -n '2p' "$file")
+			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
+			echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
+		done 
+	} | column -t -s $'\t'
+}
+list_bydate() {
+	check
+	open || exit 1
+	{
+		echo -e "\033[1mtitle\tusername\tcreation\tmodification\033[0m"
+		for file in /mnt/$kdatabaseid/*; do 
+			echo -ne "$(basename "$file")\t"
+			echo -n $(sed -n '2p' "$file")
+			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
+			echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
+		done
+	} | { 
+		read -r header; 
+		echo "$header"; 
+		sort -k 4,4; 
 	} | column -t -s $'\t'
 }
 list_menu() {
@@ -121,7 +143,7 @@ totp() {
 	oathtool -b --totp $(echo -n "$which" | tail -n1)
 }
 usage() {
-	echo -e "\033[1mlist\033[0m: lists all entries
+	echo -e "\033[1mlist\033[0m: lists all entries (list_abc or list_menu for alphabetical order)
 \033[1mcreate\033[0m: creates a new encrypted database
 \033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
 \033[1madd\033[0m: adds a new entry
@@ -146,7 +168,8 @@ case "$1" in
 	"open") open;;
 	"close") close;;
 	"create") create;;
-	"list") list;;
+	"list") list_bydate;;
+	"list_abc") list_abc;;
 	"list_menu") list_menu;;
 	"generate") generate "${@:2}";;
 	"add") add;;
