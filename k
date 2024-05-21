@@ -168,18 +168,18 @@ case "$1" in
 	"open") open;;
 	"close") close;;
 	"create") create;;
-	"list") list_bydate;;
+	"list") list_bydate;;"ls") list_bydate;;
 	"list_abc") list_abc;;
 	"list_menu") list_menu;;
 	"generate") generate "${@:2}";;
 	"add") add;;
-	"remove") remove "$2";;
+	"remove") remove "$2";;"rm") remove "$2";;
 	"edit") edit "$2";;
-	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;
+	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;"mv") rename "$2" "$3";;
 	"pass") get "$2" 1;;"get") get "$2" 1;;
 	"login") get "$2" 2;;
 	"totp") totp "$2";;
-	"copy") copy "$2";;
+	"copy") copy "$2";;"c") copy "$2";;
 	"gen") genusername; echo; genkey; echo;;
 	*) usage; exit 2;;
 esac
