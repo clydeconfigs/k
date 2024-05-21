@@ -40,7 +40,10 @@ close() {
 list() {
 	check
 	open || exit 1
-	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"; done | column -t -s $'\t'
+	{
+		echo -e "\033[1mtitle\tusername\tcreation\tmodification\033[0m"
+		for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"; echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"; done 
+	} | column -t -s $'\t'
 }
 list_menu() {
 	check
