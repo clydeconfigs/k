@@ -91,6 +91,7 @@ generate() {
 	pass=$(genkey)
 	totp=$(head -c 10 /dev/urandom | base32)
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
+	cd /mnt/$kdatabaseid
 	git add /mnt/$kdatabaseid/"$title"
 	git commit -m 'generate()'
 	echo -e "\e[32m$title generated\e[0m"
@@ -109,6 +110,7 @@ add() {
 	[ "$pass" = "gen" ] && pass=$(genkey)
 
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
+	cd /mnt/$kdatabaseid
 	git add /mnt/$kdatabaseid/"$title"
 	git commit -m 'add()'
 	echo -e "\e[32mentry added\e[0m"
@@ -119,6 +121,7 @@ remove() {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
 			rm /mnt/$kdatabaseid/"$found"
+			cd /mnt/$kdatabaseid
 			git add /mnt/$kdatabaseid/"$found"
 			git commit -m 'remove()'
 			echo -e "\e[32mremoved\e[0m"
@@ -131,6 +134,7 @@ edit() {
 	check
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		$EDITOR /mnt/$kdatabaseid/"$found" 
+		cd /mnt/$kdatabaseid
 		git add /mnt/$kdatabaseid/"$found"
 		git commit -m 'edit()'
 	}
@@ -140,6 +144,7 @@ rename() {
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		test -e /mnt/$kdatabaseid/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		mv -v /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
+		cd /mnt/$kdatabaseid
 		git add /mnt/$kdatabaseid/"$found"
 		git add /mnt/$kdatabaseid/"$2"
 		git commit -m 'rename()'
