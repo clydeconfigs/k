@@ -151,11 +151,42 @@ rename() {
 	}
 }
 get() {
-	check
-	open || exit 1
-	found=$(ls /mnt/$kdatabaseid | grep -i "$1") && { found=$(echo "$found" | head -n1); echo "found: $found"; cat /mnt/$kdatabaseid/"$found" | sed -n ${2}p; return 0; }
-	found=$(grep -irl "$1" /mnt/$kdatabaseid/*) && { found=$(echo "$found" | head -n1); echo "found: $(echo "$found" | sed 's#.*/##')"; cat "$found" | sed -n ${2}p; return 0; }
-	return 1
+    check
+    open || exit 1
+
+    candidates=$(ls /mnt/$kdatabaseid | grep -i "$1")
+    if [ -n "$candidates" ]; then
+        closest=$(echo "$candidates" | python3 -c "
+import sys
+import difflib
+input_str = '$1'
+candidates = sys.stdin.read().splitlines()
+closest_match = difflib.get_close_matches(input_str, candidates, n=1)
+if closest_match:
+    print(closest_match[0])
+")
+        echo "found: $closest"
+        sed -n "${2}p" /mnt/$kdatabaseid/"$closest"
+        return 0
+    fi
+
+    candidates=$(grep -irl "$1" /mnt/$kdatabaseid/*)
+    if [ -n "$candidates" ]; then
+        closest=$(echo "$candidates" | python3 -c "
+import sys
+import difflib
+input_str = '$1'
+candidates = sys.stdin.read().splitlines()
+closest_match = difflib.get_close_matches(input_str, candidates, n=1)
+if closest_match:
+    print(closest_match[0])
+")
+        echo "found: $(basename "$closest")"
+        sed -n "${2}p" "$closest"
+        return 0
+    fi
+
+    return 1
 }
 copy() {
 	check
