@@ -53,7 +53,7 @@ list_abc() {
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
 			echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
 		done 
-	} | column -t -s $'\t'
+	} | awk -F $'\t' 'NR==1 {print $0} NR>1 {printf "%s\t%s\t\033[90m%s\033[0m\t\033[90m%s\033[0m\n", $1, $2, $3, $4}' | column -t --separator $'\t'
 }
 list_bydate() {
 	check
@@ -70,7 +70,7 @@ list_bydate() {
 		read -r header; 
 		echo "$header"; 
 		sort -k 4,4; 
-	} | column -t -s $'\t'
+	} | awk -F $'\t' 'NR==1 {print $0} NR>1 {printf "%s\t%s\t\033[90m%s\033[0m\t\033[90m%s\033[0m\n", $1, $2, $3, $4}' | column -t --separator $'\t'
 }
 list_menu() {
 	check
