@@ -22,6 +22,10 @@ create() {
 	sudo cryptsetup luksOpen $kdatabase $kdatabaseid
 	sudo mkfs.ext4 /dev/mapper/$kdatabaseid
 	mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
+	cd /mnt/$kdatabaseid || exit 1
+	git init
+	git config --local user.name "self"
+	git config --local user.email ""
 	generate example
 	return 0
 }
@@ -86,6 +90,8 @@ generate() {
 	pass=$(genkey)
 	totp=$(head -c 10 /dev/urandom | base32)
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
+	git add /mnt/$kdatabaseid/"$title"
+	git commit -m 'generate()'
 	echo -e "\e[32m$title generated\e[0m"
 }
 add() {
@@ -102,6 +108,8 @@ add() {
 	[ "$pass" = "gen" ] && pass=$(genkey)
 
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
+	git add /mnt/$kdatabaseid/"$title"
+	git commit -m 'add()'
 	echo -e "\e[32mentry added\e[0m"
 }
 remove() {
@@ -109,7 +117,10 @@ remove() {
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			rm /mnt/$kdatabaseid/"$found"; echo -e "\e[32mremoved\e[0m"; 
+			rm /mnt/$kdatabaseid/"$found"
+			git add /mnt/$kdatabaseid/"$found"
+			git commit -m 'remove()'
+			echo -e "\e[32mremoved\e[0m"
 		} || {
 			echo "\033[0;31mcanceled\033[0m"
 		}
@@ -119,6 +130,8 @@ edit() {
 	check
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		$EDITOR /mnt/$kdatabaseid/"$found" 
+		git add /mnt/$kdatabaseid/"$found"
+		git commit -m 'edit()'
 	}
 }
 rename() {
@@ -126,6 +139,9 @@ rename() {
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		test -e /mnt/$kdatabaseid/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		mv -v /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
+		git add /mnt/$kdatabaseid/"$found"
+		git add /mnt/$kdatabaseid/"$2"
+		git commit -m 'rename()'
 	}
 }
 get() {
