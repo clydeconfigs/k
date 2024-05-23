@@ -94,7 +94,9 @@ add() {
 	test -e /mnt/$kdatabaseid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -n "login: "; read -r login
 	echo -n "pass: "; read -sr pass
+	echo ""
 	echo -n "totp: "; read -sr totp
+	echo ""
 	
 	[ "$login" = "gen" ] && login=$(genusername)
 	[ "$pass" = "gen" ] && pass=$(genkey)
