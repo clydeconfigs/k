@@ -41,11 +41,12 @@ close() {
 	sudo cryptsetup luksClose $kdatabaseid || return 1
 	return 0
 }
+header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\033[0m"; }
 list_abc() {
 	check
 	open || exit 1
 	{
-		echo -e "\033[1mtitle\tusername\tcreation\tmodification\033[0m"
+		header
 		for file in /mnt/$kdatabaseid/*; do
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
@@ -58,7 +59,7 @@ list_bydate() {
 	check
 	open || exit 1
 	{
-		echo -e "\033[1mtitle\tusername\tcreation\tmodification\033[0m"
+		header
 		for file in /mnt/$kdatabaseid/*; do 
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
