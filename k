@@ -41,21 +41,8 @@ close() {
 	sudo cryptsetup luksClose $kdatabaseid || return 1
 	return 0
 }
-header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\033[0m"; }
-list_abc() {
-	check
-	open || exit 1
-	{
-		header
-		for file in $(ls /mnt/$kdatabaseid/*); do
-			echo -ne "$(basename "$file")\t"
-			echo -n $(sed -n '2p' "$file")
-			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
-			echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
-		done 
-	} | awk -F $'\t' 'NR==1 {print $0} NR>1 {printf "%s\t%s\t\033[90m%s\033[0m\t\033[90m%s\033[0m\n", $1, $2, $3, $4}' | column -t --separator $'\t'
-}
-list_bydate() {
+header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\tHASH\033[0m"; }
+list() {
 	check
 	open || exit 1
 	{
@@ -64,13 +51,26 @@ list_bydate() {
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
-			echo -e "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
+			echo -ne "\t$(stat -c %Y "$file" | xargs -I{} date -I -d @{})"
+			echo -e "\t$(cat "$file" | md5sum | head -c5)"
 		done
 	} | { 
 		read -r header; 
 		echo "$header"; 
-		sort -k 4,4; 
-	} | awk -F $'\t' 'NR==1 {print $0} NR>1 {printf "%s\t%s\t\033[90m%s\033[0m\t\033[90m%s\033[0m\n", $1, $2, $3, $4}' | column -t --separator $'\t'
+		sort -k 1,1; 
+	} | awk -F $'\t' 'NR==1 {print $0} NR>1 {
+		hash=$5
+		sum=0
+		for (i=1; i<=length(hash); i++) {
+			sum += ord(substr(hash, i, 1))
+		}
+		colors[1]="\033[31m"; colors[2]="\033[32m"; colors[3]="\033[33m"; colors[4]="\033[34m"; colors[5]="\033[35m"; colors[6]="\033[36m"; colors[7]="\033[91m"; colors[8]="\033[92m"; colors[9]="\033[93m"; colors[10]="\033[94m"; colors[11]="\033[95m"; colors[12]="\033[96m"; colors[13]="\033[37m"; colors[14]="\033[90m"
+		color=colors[(sum % 14) + 1]  # Modulo operation to select color
+		printf "%s\t%s\t\033[90m%s\033[0m\t\033[90m%s\033[0m\t%s%s\033[0m\n", $1, $2, $3, $4, color, hash
+	}
+	function ord(str) {
+		return and(255, str)
+	}' | column -t --separator $'\t'
 }
 list_menu() {
 	check
@@ -238,8 +238,7 @@ case "$1" in
 	"open") open;;
 	"close") close;;
 	"create") create;;
-	"list") list_bydate;;"ls") list_bydate;;
-	"list_abc") list_abc;;
+	"list") list;;"ls") list;;
 	"list_menu") list_menu;;
 	"generate") generate "${@:2}";;
 	"add") add;;
