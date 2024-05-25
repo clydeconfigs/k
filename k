@@ -18,8 +18,8 @@ mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found() {
 }
 create() {
 	truncate -s 30M $kdatabase
-	cryptsetup luksFormat $kdatabase
-	sudo cryptsetup luksOpen $kdatabase $kdatabaseid
+	cryptsetup luksFormat $kdatabase || exit 1
+	sudo cryptsetup luksOpen $kdatabase $kdatabaseid || exit 1
 	sudo mkfs.ext4 /dev/mapper/$kdatabaseid
 	mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
 	cd /mnt/$kdatabaseid || exit 1
@@ -47,7 +47,7 @@ list_abc() {
 	open || exit 1
 	{
 		header
-		for file in /mnt/$kdatabaseid/*; do
+		for file in $(ls /mnt/$kdatabaseid/*); do
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
@@ -60,7 +60,7 @@ list_bydate() {
 	open || exit 1
 	{
 		header
-		for file in /mnt/$kdatabaseid/*; do 
+		for file in $(ls /mnt/$kdatabaseid/*); do 
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
@@ -75,7 +75,7 @@ list_bydate() {
 list_menu() {
 	check
 	open || exit 1
-	for file in /mnt/$kdatabaseid/*; do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
+	for file in $(ls /mnt/$kdatabaseid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
@@ -126,7 +126,7 @@ remove() {
 			git commit -m 'remove()'
 			echo -e "\e[32mremoved\e[0m"
 		} || {
-			echo "\033[0;31mcanceled\033[0m"
+			echo -e "\033[0;31mcanceled\033[0m"
 		}
 	}
 }
@@ -143,11 +143,16 @@ rename() {
 	check
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		test -e /mnt/$kdatabaseid/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
-		mv -v /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
-		cd /mnt/$kdatabaseid
-		git add /mnt/$kdatabaseid/"$found"
-		git add /mnt/$kdatabaseid/"$2"
-		git commit -m 'rename()'
+		read -p "are you sure you want to rename $found -> $2 ? (y/n): " r
+		[[ $r =~ ^(Y|y|yes)$ ]] && { 
+			mv -v /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
+			cd /mnt/$kdatabaseid
+			git add /mnt/$kdatabaseid/"$found"
+			git add /mnt/$kdatabaseid/"$2"
+			git commit -m 'rename()'
+		} || {
+			echo -e "\033[0;31mcanceled\033[0m"
+		}
 	}
 }
 get() {
@@ -215,6 +220,16 @@ usage() {
 
 test -z $kdatabase && {
 	source $HOME/.config/k
+}
+
+test -e $kdatabase || {
+	echo -e "\033[0;31mno database exists at $kdatabase\033[0m"
+	read -p "you can create one with \"k create\", do you want to continue? (y/n): " r
+	[[ $r =~ ^(Y|y|yes)$ ]] && { 
+		create
+		exit
+	} || exit 1
+
 }
 
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
