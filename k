@@ -239,7 +239,8 @@ usage() {
 \033[1medit\033[0m: allows editing an existing entry
 \033[1mrename/move\033[0m: renames an existing entry
 \033[1mlogin\033[0m: retrieves the login username for a specific entry
-\033[1mpass/get\033[0m: retrieves the password for a specific entry
+\033[1mpass/get\033[0m: retrieves the password for a specific entry, searching by entry name, login, password, hash or else
+\033[1mhash\033[0m: retrieves the password for a specific entry, searching by hash exclusively
 \033[1mgenerate\033[0m: creates a new random generated entry (requires argument) 
 \033[1mgen\033[0m: generates a user and password
 \033[1mopen\033[0m: opens the encrypted database
