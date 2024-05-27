@@ -98,10 +98,15 @@ generate() {
 }
 add() {
 	open || exit 1
-	echo -n "title: "; read -r title
+	title="$1"
+	echo -en "title \033[90m(example: google_account)\033[0m: "; read -r title
+	echo "$title" | grep " " && {
+		echo -e "\033[0;31mtitle shouldn't contain spaces\033[0m"
+		exit 1
+	}
 	test -e /mnt/$kdatabaseid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
-	echo -n "login: "; read -r login
-	echo -n "pass: "; read -sr pass
+	echo -en "login \033[90m(example: bogus@gmail.com)\033[0m: "; read -r login
+	echo -en "pass \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
 	echo ""
 	echo -n "totp: "; read -sr totp
 	echo ""
@@ -159,6 +164,8 @@ get() {
     check
     open || exit 1
 
+	# (?) search for a entry name that matches
+	
     candidates=$(ls /mnt/$kdatabaseid | grep -i "$1")
     if [ -n "$candidates" ]; then
         closest=$(echo "$candidates" | python3 -c "
@@ -175,6 +182,12 @@ if closest_match:
         return 0
     fi
 
+	# before trying to search by content, try if the user tried using a hash:
+
+	get_by_hash "$1"
+	
+	# (?) then, if nothing found, search for a matching password or entry content
+	
     candidates=$(grep -irl "$1" /mnt/$kdatabaseid/*)
     if [ -n "$candidates" ]; then
         closest=$(echo "$candidates" | python3 -c "
@@ -190,8 +203,23 @@ if closest_match:
         sed -n "${2}p" "$closest"
         return 0
     fi
-
+	
     return 1
+}
+get_by_hash() {
+	# i wanted to add this, but then you cannot write ONLY the beginning of a hash, like "78f" instead of "78fa1"
+	# [[ ${#1} -eq 5 ]] && echo "True" || echo "False"
+	
+	for file in /mnt/$kdatabaseid/*; do
+	    if [ -f "$file" ]; then
+	        hash=$(md5sum "$file" | head -c 5)
+			
+	        if echo "$hash" | grep -q ^"$1"; then
+				echo "found: $(basename $file)"
+	            head -n1 $file
+	        fi
+	    fi
+	done
 }
 copy() {
 	check
@@ -241,11 +269,12 @@ case "$1" in
 	"list") list;;"ls") list;;
 	"list_menu") list_menu;;
 	"generate") generate "${@:2}";;
-	"add") add;;
+	"add") add "$2";;
 	"remove") remove "$2";;"rm") remove "$2";;
 	"edit") edit "$2";;
 	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;"mv") rename "$2" "$3";;
 	"pass") get "$2" 1;;"get") get "$2" 1;;
+	"hash") get_by_hash "$2";;
 	"login") get "$2" 2;;
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
