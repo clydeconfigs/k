@@ -1,28 +1,17 @@
 #!/usr/bin/bash
 
 check() {
-	test ! -e /dev/mapper/$kdatabaseid && {
-		open
+	test -z "$(ls -A "$kdatabase/open")" && {
+		open || exit 1
 	}
-	test -z "$(ls /mnt/$kdatabaseid)" && {
-		echo -e "\033[0;31mno entries yet... create one to list them\033[0m"
-		exit 1
-	}
-}
-mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found() {
-	sudo mkdir /mnt/$kdatabaseid 2>/dev/null
-	sudo mount /dev/mapper/$kdatabaseid /mnt/$kdatabaseid || return 1
-	sudo chmod 700 /mnt/$kdatabaseid
-	sudo chown -R $USER:$USER /mnt/$kdatabaseid
-	rm -r /mnt/$kdatabaseid/lost+found 2>/dev/null
 }
 create() {
-	truncate -s 30M $kdatabase
-	cryptsetup luksFormat $kdatabase || exit 1
-	sudo cryptsetup luksOpen $kdatabase $kdatabaseid || exit 1
-	sudo mkfs.ext4 /dev/mapper/$kdatabaseid
-	mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
-	cd /mnt/$kdatabaseid || exit 1
+	mkdir $kdatabase
+	chmod 700 $kdatabase
+	mkdir $kdatabase/closed
+	mkdir $kdatabase/open
+	encfs $kdatabase/closed $kdatabase/open
+	cd $kdatabase/open || exit 1
 	git init
 	git config --local user.name "self"
 	git config --local user.email ""
@@ -30,24 +19,19 @@ create() {
 	return 0
 }
 open() {
-	test -e /dev/mapper/$kdatabaseid && return 0
-	sudo cryptsetup luksOpen $kdatabase $kdatabaseid 2>/dev/null && {
-		mkdir_and_mount_and_chmod_and_chown_and_rm_lost+found
-	}
+	encfs $kdatabase/closed $kdatabase/open || return 1
 	return 0
 }
 close() {
-	sudo umount /mnt/$kdatabaseid
-	sudo cryptsetup luksClose $kdatabaseid || return 1
+	fusermount -u $kdatabase/open || return 1
 	return 0
 }
 header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\tHASH\033[0m"; }
 list() {
 	check
-	open || exit 1
 	{
 		header
-		for file in $(ls /mnt/$kdatabaseid/*); do 
+		for file in $(ls $kdatabase/open/*); do 
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
@@ -74,8 +58,7 @@ list() {
 }
 list_menu() {
 	check
-	open || exit 1
-	for file in $(ls /mnt/$kdatabaseid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
+	for file in $(ls $kdatabase/open/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
@@ -85,26 +68,26 @@ genusername() {
 }
 generate() {
 	test -z "$@" && exit 1
-	test -e /mnt/$kdatabaseid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+	test -e $kdatabase/open/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	title="$@"
 	login=$(genusername)
 	pass=$(genkey)
 	totp=$(head -c 10 /dev/urandom | base32)
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
-	cd /mnt/$kdatabaseid
-	git add /mnt/$kdatabaseid/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > $kdatabase/open/"$title"
+	cd $kdatabase/open
+	git add $kdatabase/open/"$title"
 	git commit -m 'generate()'
 	echo -e "\e[32m$title generated\e[0m"
 }
 add() {
-	open || exit 1
+	check
 	title="$1"
 	echo -en "title \033[90m(example: google_account)\033[0m: "; read -r title
 	echo "$title" | grep " " && {
 		echo -e "\033[0;31mtitle shouldn't contain spaces\033[0m"
 		exit 1
 	}
-	test -e /mnt/$kdatabaseid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+	test -e $kdatabase/open/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -en "login \033[90m(example: bogus@gmail.com)\033[0m: "; read -r login
 	echo -en "pass \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
 	echo ""
@@ -114,9 +97,9 @@ add() {
 	[ "$login" = "" ] && login=$(genusername)
 	[ "$pass" = "" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
-	cd /mnt/$kdatabaseid
-	git add /mnt/$kdatabaseid/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > $kdatabase/open/"$title"
+	cd $kdatabase/open
+	git add $kdatabase/open/"$title"
 	git commit -m 'add()'
 	echo -e "\e[32mentry added\e[0m"
 }
@@ -125,9 +108,9 @@ remove() {
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			rm /mnt/$kdatabaseid/"$found"
-			cd /mnt/$kdatabaseid
-			git add /mnt/$kdatabaseid/"$found"
+			rm $kdatabase/open/"$found"
+			cd $kdatabase/open
+			git add $kdatabase/open/"$found"
 			git commit -m 'remove()'
 			echo -e "\e[32mremoved\e[0m"
 		} || {
@@ -138,22 +121,22 @@ remove() {
 edit() {
 	check
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
-		$EDITOR /mnt/$kdatabaseid/"$found" 
-		cd /mnt/$kdatabaseid
-		git add /mnt/$kdatabaseid/"$found"
+		$EDITOR $kdatabase/open/"$found" 
+		cd $kdatabase/open
+		git add $kdatabase/open/"$found"
 		git commit -m 'edit()'
 	}
 }
 rename() {
 	check
 	found=$(get "$1" | grep found: | sed 's/found: //') && {
-		test -e /mnt/$kdatabaseid/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+		test -e $kdatabase/open/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		read -p "are you sure you want to rename $found -> $2 ? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			mv -v /mnt/$kdatabaseid/"$found" /mnt/$kdatabaseid/"$2"
-			cd /mnt/$kdatabaseid
-			git add /mnt/$kdatabaseid/"$found"
-			git add /mnt/$kdatabaseid/"$2"
+			mv -v $kdatabase/open/"$found" $kdatabase/open/"$2"
+			cd $kdatabase/open
+			git add $kdatabase/open/"$found"
+			git add $kdatabase/open/"$2"
 			git commit -m 'rename()'
 		} || {
 			echo -e "\033[0;31mcanceled\033[0m"
@@ -162,14 +145,13 @@ rename() {
 }
 get() {
     check
-    open || exit 1
 
 	# (?) search for a entry name that matches
 	
-    candidates=$(ls /mnt/$kdatabaseid | grep -i "$1")
+    candidates=$(ls $kdatabase/open | grep -i "$1")
     test $(echo "$candidates" | wc -l) -eq 1 && {
     	echo "found: $candidates"
-    	sed -n "${2}p" /mnt/$kdatabaseid/"$candidates"
+    	sed -n "${2}p" $kdatabase/open/"$candidates"
    	    return 0
     } || {
 	    if [ -n "$candidates" ]; then
@@ -183,7 +165,7 @@ if closest_match:
     print(closest_match[0])
 ")
 	        echo "found: $closest"
-	        sed -n "${2}p" /mnt/$kdatabaseid/"$closest"
+	        sed -n "${2}p" $kdatabase/open/"$closest"
 	        return 0
 	    fi
     }
@@ -194,7 +176,7 @@ if closest_match:
 	
 	# (?) then, if nothing found, search for a matching password or entry content
 	
-    candidates=$(grep -irl "$1" /mnt/$kdatabaseid/*)
+    candidates=$(grep -irl "$1" $kdatabase/open/*)
     if [ -n "$candidates" ]; then
         closest=$(echo "$candidates" | python3 -c "
 import sys
@@ -216,7 +198,7 @@ get_by_hash() {
 	# i wanted to add this, but then you cannot write ONLY the beginning of a hash, like "78f" instead of "78fa1"
 	# [[ ${#1} -eq 5 ]] && echo "True" || echo "False"
 	
-	for file in /mnt/$kdatabaseid/*; do
+	for file in $kdatabase/open/*; do
 	    if [ -f "$file" ]; then
 	        hash=$(md5sum "$file" | head -c 5)
 			
@@ -256,6 +238,8 @@ usage() {
 test -z $kdatabase && {
 	source $HOME/.config/k
 }
+
+kdatabase=$(echo -n $kdatabase | sed 's:/*$::')
 
 test -e $kdatabase || {
 	echo -e "\033[0;31mno database exists at $kdatabase\033[0m"
