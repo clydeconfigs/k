@@ -19,14 +19,7 @@ test -z $kdatabase && {
 	source $HOME/.config/k
 }
 
-kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
-
-if test ! -e /dev/mapper/$kdatabaseid; then
-    st -e k open || { 
-        k close
-        exit 1
-    }
-fi
+st -e k check
 
 titles=$(k list_menu | awk -F $'\t' '{print $1}')
 logins=$(k list_menu | awk -F $'\t' '{print $2}')

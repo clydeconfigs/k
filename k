@@ -254,6 +254,7 @@ test -e $kdatabase || {
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
 
 case "$1" in
+	"check") check;;
 	"open") open;;
 	"close") close;;
 	"create") create;;
