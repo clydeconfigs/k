@@ -152,26 +152,27 @@ get() {
 
 	# (?) search for a entry name that matches
 	
-    candidates=$(ls $kdatabase/open | grep -i "$1")
-    test $(echo "$candidates" | wc -l) -eq 1 && {
-    	echo "found: $candidates"
-    	sed -n "${2}p" $kdatabase/open/"$candidates"
-   	    return 0
-    } || {
-	    if [ -n "$candidates" ]; then
-	        closest=$(echo "$candidates" | python3 -c "
-import sys
-import difflib
-input_str = '$1'
-candidates = sys.stdin.read().splitlines()
-closest_match = difflib.get_close_matches(input_str, candidates, n=1)
-if closest_match:
-    print(closest_match[0])
-")
-	        echo "found: $closest"
-	        sed -n "${2}p" $kdatabase/open/"$closest"
-	        return 0
-	    fi
+    candidates=$(ls $kdatabase/open | grep -i "$1") && {
+	    test $(echo "$candidates" | wc -l) -eq 1 && {
+	    	echo "found: $candidates"
+	    	sed -n "${2}p" $kdatabase/open/"$candidates"
+	   	    return 0
+	    } || {
+		    if [ -n "$candidates" ]; then
+		        closest=$(echo "$candidates" | python3 -c "
+	import sys
+	import difflib
+	input_str = '$1'
+	candidates = sys.stdin.read().splitlines()
+	closest_match = difflib.get_close_matches(input_str, candidates, n=1)
+	if closest_match:
+	    print(closest_match[0])
+	")
+		        echo "found: $closest"
+		        sed -n "${2}p" $kdatabase/open/"$closest"
+		        return 0
+		    fi
+	    }
     }
 
 	# before trying to search by content, try if the user tried using a hash:
@@ -182,6 +183,11 @@ if closest_match:
 	
     candidates=$(grep -irl "$1" $kdatabase/open/*)
     if [ -n "$candidates" ]; then
+    	test $(echo "$candidates" | wc -l) -eq 1 && {
+	    	echo "found: $(basename $candidates)"
+	    	sed -n "${2}p" "$candidates"
+	   	    return 0
+	    }
         closest=$(echo "$candidates" | python3 -c "
 import sys
 import difflib
