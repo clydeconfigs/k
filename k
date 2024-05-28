@@ -111,8 +111,8 @@ add() {
 	echo -n "totp: "; read -sr totp
 	echo ""
 	
-	[ "$login" = "gen" ] && login=$(genusername)
-	[ "$pass" = "gen" ] && pass=$(genkey)
+	[ "$login" = "" ] && login=$(genusername)
+	[ "$pass" = "" ] && pass=$(genkey)
 
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > /mnt/$kdatabaseid/"$title"
 	cd /mnt/$kdatabaseid
@@ -167,8 +167,13 @@ get() {
 	# (?) search for a entry name that matches
 	
     candidates=$(ls /mnt/$kdatabaseid | grep -i "$1")
-    if [ -n "$candidates" ]; then
-        closest=$(echo "$candidates" | python3 -c "
+    test $(echo "$candidates" | wc -l) -eq 1 && {
+    	echo "found: $candidates"
+    	sed -n "${2}p" /mnt/$kdatabaseid/"$candidates"
+   	    return 0
+    } || {
+	    if [ -n "$candidates" ]; then
+	        closest=$(echo "$candidates" | python3 -c "
 import sys
 import difflib
 input_str = '$1'
@@ -177,10 +182,11 @@ closest_match = difflib.get_close_matches(input_str, candidates, n=1)
 if closest_match:
     print(closest_match[0])
 ")
-        echo "found: $closest"
-        sed -n "${2}p" /mnt/$kdatabaseid/"$closest"
-        return 0
-    fi
+	        echo "found: $closest"
+	        sed -n "${2}p" /mnt/$kdatabaseid/"$closest"
+	        return 0
+	    fi
+    }
 
 	# before trying to search by content, try if the user tried using a hash:
 
