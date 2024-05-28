@@ -1,9 +1,17 @@
 #!/usr/bin/bash
 
 check() {
+	# 
+	# maybe check should just be inside open() ??? i don't know, man... i'll leave that for tomorrow
+	#
+	
 	test -z "$(ls -A "$kdatabase/open")" && {
 		open || exit 1
 	}
+}
+open() {
+	encfs $kdatabase/closed $kdatabase/open || return 1
+	return 0
 }
 create() {
 	mkdir $kdatabase
@@ -16,10 +24,6 @@ create() {
 	git config --local user.name "self"
 	git config --local user.email ""
 	generate example
-	return 0
-}
-open() {
-	encfs $kdatabase/closed $kdatabase/open || return 1
 	return 0
 }
 close() {

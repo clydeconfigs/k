@@ -19,7 +19,9 @@ test -z $kdatabase && {
 	source $HOME/.config/k
 }
 
-st -e k check
+test -z "$(ls -A "$kdatabase/open")" && {
+    st -e k open
+}
 
 titles=$(k list_menu | awk -F $'\t' '{print $1}')
 logins=$(k list_menu | awk -F $'\t' '{print $2}')
