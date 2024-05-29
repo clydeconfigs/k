@@ -77,7 +77,7 @@ generate() {
 	login=$(genusername)
 	pass=$(genkey)
 	totp=$(head -c 10 /dev/urandom | base32)
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > $kdatabase/open/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > $kdatabase/open/"$title"
 	cd $kdatabase/open
 	git add $kdatabase/open/"$title"
 	git commit -m 'generate()'
@@ -101,7 +101,7 @@ add() {
 	[ "$login" = "" ] && login=$(genusername)
 	[ "$pass" = "" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")" > $kdatabase/open/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > $kdatabase/open/"$title"
 	cd $kdatabase/open
 	git add $kdatabase/open/"$title"
 	git commit -m 'add()'
@@ -150,12 +150,21 @@ rename() {
 get() {
     check
 
+	# look at that logic!!!
+	#
+	# get() {
+	# 	echo -e "1\n2\n3\n4" | sed -n "${1},${2}p"
+	# }
+	# 
+	# get $1 $2
+	#
+
 	# (?) search for a entry name that matches
 	
     candidates=$(ls $kdatabase/open | grep -i "$1") && {
 	    test $(echo "$candidates" | wc -l) -eq 1 && {
 	    	echo "found: $candidates"
-	    	sed -n "${2}p" $kdatabase/open/"$candidates"
+	    	sed -n "${2},${3}p" $kdatabase/open/"$candidates"
 	   	    return 0
 	    } || {
 		    if [ -n "$candidates" ]; then
@@ -169,7 +178,7 @@ get() {
 	    print(closest_match[0])
 	")
 		        echo "found: $closest"
-		        sed -n "${2}p" $kdatabase/open/"$closest"
+		        sed -n "${2},${3}p" $kdatabase/open/"$closest"
 		        return 0
 		    fi
 	    }
@@ -185,7 +194,7 @@ get() {
     if [ -n "$candidates" ]; then
     	test $(echo "$candidates" | wc -l) -eq 1 && {
 	    	echo "found: $(basename $candidates)"
-	    	sed -n "${2}p" "$candidates"
+	    	sed -n "${2},${3}p" "$candidates"
 	   	    return 0
 	    }
         closest=$(echo "$candidates" | python3 -c "
@@ -238,6 +247,7 @@ usage() {
 \033[1mrename/move\033[0m: renames an existing entry
 \033[1mlogin\033[0m: retrieves the login username for a specific entry
 \033[1mpass/get\033[0m: retrieves the password for a specific entry, searching by entry name, login, password, hash or else
+\033[1mnote\033[0m: retrieves the plain text note for a specific entry, searching by entry name, login, password, hash or else
 \033[1mhash\033[0m: retrieves the password for a specific entry, searching by hash exclusively
 \033[1mgenerate\033[0m: creates a new random generated entry (requires argument) 
 \033[1mgen\033[0m: generates a user and password
@@ -275,9 +285,10 @@ case "$1" in
 	"remove") remove "$2";;"rm") remove "$2";;
 	"edit") edit "$2";;
 	"rename") rename "$2" "$3";;"move") rename "$2" "$3";;"mv") rename "$2" "$3";;
-	"pass") get "$2" 1;;"get") get "$2" 1;;
+	"pass") get "$2" 1 1;;"get") get "$2" 1 1;;
 	"hash") get_by_hash "$2";;
-	"login") get "$2" 2;;
+	"login") get "$2" 2 2;;
+	"note") get "$2" 10 "\$";;
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
 	"gen") genusername; echo; genkey; echo;;
