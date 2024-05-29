@@ -154,6 +154,10 @@ rename() {
 get() {
     check
 
+	#
+	# this function is the messiest thing in the universe, please don't look at it
+	# 
+	
 	# look at that logic!!!
 	#
 	# get() {
@@ -168,7 +172,8 @@ get() {
     candidates=$(ls $kdatabase/open | grep -i "$1") && {
 	    test $(echo "$candidates" | wc -l) -eq 1 && {
 	    	echo "found: $candidates"
-	    	sed -n "${2},${3}p" $kdatabase/open/"$candidates"
+	    	_return="$(sed -n "${2},${3}p" $kdatabase/open/"$candidates")"
+	    	test "$3" = '$' && { print_note "$(echo "$_return" | fold -s)"; } || echo "$_return"
 	   	    return 0
 	    } || {
 		    if [ -n "$candidates" ]; then
@@ -182,13 +187,14 @@ get() {
 	    print(closest_match[0])
 	")
 		        echo "found: $closest"
-		        sed -n "${2},${3}p" $kdatabase/open/"$closest"
+		        _return="$(sed -n "${2},${3}p" $kdatabase/open/"$closest")"
+		        test "$3" = '$' && { print_note "$(echo -e "$_return" | fold -s)"; } || echo "$_return"
 		        return 0
 		    fi
 	    }
     }
 
-	# before trying to search by content, try if the user tried using a hash:
+	# (?) before trying to search by content, try if the user tried using a hash:
 
 	get_by_hash "$1"
 	
@@ -198,7 +204,8 @@ get() {
     if [ -n "$candidates" ]; then
     	test $(echo "$candidates" | wc -l) -eq 1 && {
 	    	echo "found: $(basename $candidates)"
-	    	sed -n "${2},${3}p" "$candidates"
+	    	_return="$(sed -n "${2},${3}p" "$candidates")"
+	    	test "$3" = '$' && { print_note "$(echo -e "$_return" | fold -s)"; } || echo "$_return"
 	   	    return 0
 	    }
         closest=$(echo "$candidates" | python3 -c "
@@ -211,7 +218,7 @@ if closest_match:
     print(closest_match[0])
 ")
         echo "found: $(basename "$closest")"
-        sed -n "${2}p" "$closest"
+        return="$(sed -n "${2}p" "$closest")"
         return 0
     fi
 	
