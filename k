@@ -10,7 +10,7 @@ check() {
 	}
 }
 open() {
-	encfs $kdatabase/closed $kdatabase/open || return 1
+	gocryptfs $kdatabase/closed $kdatabase/open || return 1
 	return 0
 }
 create() {
@@ -18,7 +18,11 @@ create() {
 	chmod 700 $kdatabase
 	mkdir $kdatabase/closed
 	mkdir $kdatabase/open
-	encfs $kdatabase/closed $kdatabase/open
+	gocryptfs -scryptn 21 -init $kdatabase/closed
+	gocryptfs $kdatabase/closed $kdatabase/open
+	# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	# on this commands, there should be some error preventing, but i don't care since i am the only person who uses this. implement it if you want more people to use it =)
+	
 	cd $kdatabase/open || exit 1
 	git init
 	git config --local user.name "self"
@@ -236,6 +240,23 @@ totp() {
 	which=$(get "$1" 3)
 	echo "$which" | head -n1
 	oathtool -b --totp $(echo -n "$which" | tail -n1)
+}
+print_note() {
+    local text="$1"
+    local rows=$(echo "$text" | wc -l)
+    local cols=$(echo "$text" | awk '{ if ( length > L ) { L=length } } END { print L }')
+
+    local bg_color="\e[48;5;221m"
+    local fg_color="\e[38;5;235m"
+    local reset_color="\e[0m"
+
+    printf "${bg_color}%*s${reset_color}\n" $((cols + 4)) ""
+
+    while IFS= read -r line; do
+        printf "${bg_color}  ${fg_color}%-*s  ${bg_color}${reset_color}\n" "$cols" "$line"
+    done <<< "$text"
+
+    printf "${bg_color}%*s${reset_color}\n" $((cols + 4)) ""
 }
 usage() {
 	echo -e "\033[1mlist\033[0m: lists all entries (list_abc or list_menu for alphabetical order)
