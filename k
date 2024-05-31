@@ -113,7 +113,7 @@ add() {
 }
 remove() {
 	check
-	found=$(get "$1" | grep found: | sed 's/found: //') && {
+	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
 			rm $kdatabase/open/"$found"
@@ -128,7 +128,7 @@ remove() {
 }
 edit() {
 	check
-	found=$(get "$1" | grep found: | sed 's/found: //') && {
+	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
 		$EDITOR $kdatabase/open/"$found" 
 		cd $kdatabase/open
 		git add $kdatabase/open/"$found"
@@ -137,7 +137,7 @@ edit() {
 }
 rename() {
 	check
-	found=$(get "$1" | grep found: | sed 's/found: //') && {
+	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
 		test -e $kdatabase/open/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		read -p "are you sure you want to rename $found -> $2 ? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
@@ -165,6 +165,8 @@ get() {
 	# }
 	# 
 	# get $1 $2
+	#
+	# and now, for half a cent and a stupid logic, you have to write "get $1 $2 $2"
 	#
 
 	# (?) search for a entry name that matches
@@ -241,7 +243,7 @@ get_by_hash() {
 }
 copy() {
 	check
-	get "$1" 1 | tail -n1 | tr -d '\n' | xclip -sel c
+	get "$1" 1 1 | tail -n1 | tr -d '\n' | xclip -sel c
 }
 totp() {
 	which=$(get "$1" 3 3)
