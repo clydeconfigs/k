@@ -244,7 +244,7 @@ copy() {
 	get "$1" 1 | tail -n1 | tr -d '\n' | xclip -sel c
 }
 totp() {
-	which=$(get "$1" 3)
+	which=$(get "$1" 3 3)
 	echo "$which" | head -n1
 	oathtool -b --totp $(echo -n "$which" | tail -n1)
 }
