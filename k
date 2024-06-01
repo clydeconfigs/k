@@ -180,13 +180,13 @@ get() {
 	    } || {
 		    if [ -n "$candidates" ]; then
 		        closest=$(echo "$candidates" | python3 -c "
-	import sys
-	import difflib
-	input_str = '$1'
-	candidates = sys.stdin.read().splitlines()
-	closest_match = difflib.get_close_matches(input_str, candidates, n=1)
-	if closest_match:
-	    print(closest_match[0])
+import sys
+import difflib
+input_str = '$1'
+candidates = sys.stdin.read().splitlines()
+closest_match = difflib.get_close_matches(input_str, candidates, n=1)
+if closest_match:
+    print(closest_match[0])
 	")
 		        echo "found: $closest"
 		        _return="$(sed -n "${2},${3}p" $kdatabase/open/"$closest")"
