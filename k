@@ -202,29 +202,15 @@ get() {
 	
 	# (?) then, if nothing found, search for a matching password or entry content
 	
-    candidates=$(grep -irl "$1" $kdatabase/open/*)
-    if [ -n "$candidates" ]; then
-    	test $(echo "$candidates" | wc -l) -eq 1 && {
-	    	echo "found: $(basename $candidates)"
-	    	_return="$(sed -n "${2},${3}p" "$candidates")"
-	    	test "$3" = '$' && { print_note "$(echo -e "$_return" | fold -s)"; } || echo "$_return"
-	   	    return 0
-	    }
-        closest=$(echo "$candidates" | python3 -c "
-import sys
-import difflib
-input_str = '$1'
-candidates = sys.stdin.read().splitlines()
-closest_match = difflib.get_close_matches(input_str, candidates, n=1)
-if closest_match:
-    print(closest_match[0])
-")
-        echo "found: $(basename "$closest")"
-        return="$(sed -n "${2}p" "$closest")"
-        return 0
-    fi
-	
-    return 1
+    found=$(grep -irl "$1" $kdatabase/open/*  | head -n1)
+    echo "found: $(basename $found)"
+	_return="$(sed -n "${2},${3}p" $found)"
+    test "$3" = '$' && { 
+    	print_note "$(echo -e "$_return" | fold -s)"; 
+    } || { 
+   		echo "$_return";
+   	} 
+ 
 }
 get_by_hash() {
 	# i wanted to add this, but then you cannot write ONLY the beginning of a hash, like "78f" instead of "78fa1"
