@@ -229,7 +229,10 @@ get_by_hash() {
 }
 copy() {
 	check
-	get "$1" 1 1 | tail -n1 | tr -d '\n' | xclip -sel c
+	entry="$(get "$1" 1 1)" || exit 1
+	echo "$entry" | tail -n1 | tr -d '\n' | xclip -sel c
+	echo "$entry" | head -n1 | sed 's/^found:/copied:/'
+	echo -e "\033[0;33mCAREFUL: USING THE CLIPBOARD CAN MAKE ANY PROGRAM READ YOUR CREDENTIALS, THIS IN UNSAFE (FOR EXAMPLE IN ANY WEBSITE USING JAVASCRIPT). USE THIS ONLY WHEN STRICTLY NECESSARY\033[0m"
 }
 totp() {
 	which=$(get "$1" 3 3)
@@ -254,21 +257,36 @@ print_note() {
     printf "${bg_color}%*s${reset_color}\n" $((cols + 4)) ""
 }
 usage() {
-	echo -e "\033[1mlist\033[0m: lists all entries (list_abc or list_menu for alphabetical order)
-\033[1mcreate\033[0m: creates a new encrypted database
-\033[1mcopy\033[0m: copies the password of a specific entry to the clipboard
-\033[1madd\033[0m: adds a new entry
-\033[1mremove\033[0m: removes an entry
-\033[1medit\033[0m: allows editing an existing entry
-\033[1mrename/move\033[0m: renames an existing entry
-\033[1mlogin\033[0m: retrieves the login username for a specific entry
-\033[1mpass/get\033[0m: retrieves the password for a specific entry, searching by entry name, login, password, hash or else
-\033[1mnote\033[0m: retrieves the plain text note for a specific entry, searching by entry name, login, password, hash or else
-\033[1mhash\033[0m: retrieves the password for a specific entry, searching by hash exclusively
-\033[1mgenerate\033[0m: creates a new random generated entry (requires argument) 
-\033[1mgen\033[0m: generates a user and password
-\033[1mopen\033[0m: opens the encrypted database
-\033[1mclose\033[0m: closes the encrypted database"
+	echo -e "\033[1mlist\033[0m: 
+  lists all entries (list_abc or list_menu for alphabetical order)
+\033[1mcreate\033[0m: 
+  creates a new encrypted database
+\033[1mcopy\033[0m: 
+  copies the password of a specific entry to the clipboard
+\033[1madd\033[0m: 
+  adds a new entry
+\033[1mremove\033[0m: 
+  removes an entry
+\033[1medit\033[0m: 
+  allows editing an existing entry
+\033[1mrename/move\033[0m: 
+  renames an existing entry
+\033[1mlogin\033[0m: 
+  retrieves the login username for a specific entry
+\033[1mpass/get\033[0m: 
+  retrieves the password for a specific entry, searching by entry name, login, password, hash or else
+\033[1mnote\033[0m: 
+  retrieves the plain text note for a specific entry, searching by entry name, login, password, hash or else
+\033[1mhash\033[0m: 
+  retrieves the password for a specific entry, searching by hash exclusively
+\033[1mgenerate\033[0m: 
+  creates a new random generated entry (requires argument) 
+\033[1mgen\033[0m: 
+  generates a user and password
+\033[1mopen\033[0m: 
+  opens the encrypted database
+\033[1mclose\033[0m: 
+  closes the encrypted database"
 }
 
 test -z $kdatabase && {
