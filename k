@@ -198,7 +198,7 @@ if closest_match:
 
 	# (?) before trying to search by content, try if the user tried using a hash:
 
-	get_by_hash "$1"
+	get_by_hash "$1" && exit 0
 	
 	# (?) then, if nothing found, search for a matching password or entry content
 	
@@ -223,9 +223,12 @@ get_by_hash() {
 	        if echo "$hash" | grep -q ^"$1"; then
 				echo "found: $(basename $file)"
 	            head -n1 $file
+	            return 0
 	        fi
 	    fi
 	done
+
+	return 1
 }
 copy() {
 	check
@@ -256,6 +259,53 @@ print_note() {
 
     printf "${bg_color}%*s${reset_color}\n" $((cols + 4)) ""
 }
+test_db_exists() {
+	test -e $kdatabase || {
+		echo -e "\033[0;31mno database exists at $kdatabase\033[0m"
+		read -p "you can create one with \"k create\", do you want to continue? (y/n): " r
+		[[ $r =~ ^(Y|y|yes)$ ]] && { 
+			create
+			return 1
+		} || return 1
+	
+	}
+	return 0
+}
+exportdb() {
+	test -z "$1" && exit 1
+	test_db_exists || exit 1
+	tar -cf "$1".tgz -C $kdatabase/closed . && {
+		echo "exported database at $1"
+		exit 0
+	}
+	exit 1
+}
+importdb() {
+	test -z "$1" && exit 1
+	test -e $kdatabase && {
+		echo -e "\033[0;31ma database exists at $kdatabase!\033[0m"
+		exit 1
+	}
+
+	mkdir -p $kdatabase/closed
+	tar -xf "$1" -C $kdatabase/closed && {
+		mkdir $kdatabase/open
+		echo "imported database to $kdatabase, open with 'k open'"
+		exit 0
+	}
+	exit 1
+}
+exportraw() {
+	read -p "this will export your database without encryption, do you want to continue? (y/n): " r
+	[[ $r =~ ^(Y|y|yes)$ ]] && { 
+		tar -cf "$1".tgz -C $kdatabase/open . && {
+			echo "exported raw database at $1"
+			exit 0
+		}
+	}
+	exit 1
+}
+
 usage() {
 	echo -e "\033[1mlist\033[0m: 
   lists all entries (list_abc or list_menu for alphabetical order)
@@ -295,15 +345,9 @@ test -z $kdatabase && {
 
 kdatabase=$(echo -n $kdatabase | sed 's:/*$::')
 
-test -e $kdatabase || {
-	echo -e "\033[0;31mno database exists at $kdatabase\033[0m"
-	read -p "you can create one with \"k create\", do you want to continue? (y/n): " r
-	[[ $r =~ ^(Y|y|yes)$ ]] && { 
-		create
-		exit
-	} || exit 1
-
-}
+test "$1" != "import" && {
+	test_db_exists || exit 1
+} 
 
 kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
 
@@ -326,5 +370,8 @@ case "$1" in
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
 	"gen") genusername; echo; genkey; echo;;
+	"export") exportdb "$2";;
+	"import") importdb "$2";;
+	"exportraw") exportraw "$2";;
 	*) usage; exit 2;;
 esac

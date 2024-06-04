@@ -33,7 +33,7 @@ test -z "$entry" && exit 1
 entrytitle=$(echo "$titles" | sed -n ${entry}p)
 login=$(echo "$logins" | sed -n ${entry}p)
 password=$(k get "$entrytitle" | tail -n1)
-totp=$(k totp "$entrytitle")
+totp=$(k totp "$entrytitle" | tail -n1)
 
 choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
 
