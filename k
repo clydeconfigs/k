@@ -296,7 +296,8 @@ importdb() {
 	exit 1
 }
 exportraw() {
-	read -p "this will export your database without encryption, do you want to continue? (y/n): " r
+	echo -ne "\033[0;33mCAREFUL: THIS WILL EXPORT YOUR DATABASE WITHOUT ENCRYPTION, DO YOU WANT TO CONTINUE? (y/n): \033[0m"
+	read r
 	[[ $r =~ ^(Y|y|yes)$ ]] && { 
 		tar -cf "$1".tgz -C $kdatabase/open . && {
 			echo "exported raw database at $1"
@@ -336,7 +337,13 @@ usage() {
 \033[1mopen\033[0m: 
   opens the encrypted database
 \033[1mclose\033[0m: 
-  closes the encrypted database"
+  closes the encrypted database
+\033[1mexport\033[0m: 
+  exports the existing database (which location specified in \$kdatabase)
+\033[1mimport\033[0m: 
+  imports a exported database in .tgz format into the current \$kdatabase location
+\033[1mexport\033[0m: 
+  exports the existing database WITHOUT ENCRYPTION, only for testing (which location specified in \$kdatabase)"
 }
 
 test -z $kdatabase && {
