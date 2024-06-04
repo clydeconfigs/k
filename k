@@ -283,7 +283,7 @@ exportdb() {
 importdb() {
 	test -z "$1" && exit 1
 	test -e $kdatabase && {
-		echo -e "\033[0;31ma database exists at $kdatabase!\033[0m"
+		echo -e "\033[0;31man existing database exists at $kdatabase! you should chose a \$kdatabase location which is empty\033[0m"
 		exit 1
 	}
 
