@@ -19,7 +19,9 @@ test -z $kdatabase && {
 	source $HOME/.config/k
 }
 
-test -z "$(ls -A "$kdatabase/open")" && {
+kdbid=$(basename $kdatabase).kdb.$(echo $kdatabase | b2sum | cut -b1-8)
+
+test -z "$(ls -A /tmp/"$kdbid")" && {
     st -e k open
 }
 
