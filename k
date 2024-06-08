@@ -5,25 +5,28 @@ check() {
 	# maybe check should just be inside open() ??? i don't know, man... i'll leave that for tomorrow
 	#
 	
-	test -z "$(ls -A "$kdatabase/open")" && {
+	test -z "$(ls -A "/tmp/$kdbid" 2>/dev/null)" && {
 		open || exit 1
 	}
 }
 open() {
-	gocryptfs $kdatabase/closed $kdatabase/open || return 1
+	mkdir /tmp/$kdbid 2>/dev/null
+	chmod 700 /tmp/$kdbid
+	gocryptfs $kdatabase/encrypted /tmp/$kdbid || return 1
 	return 0
 }
 create() {
 	mkdir $kdatabase
 	chmod 700 $kdatabase
-	mkdir $kdatabase/closed
-	mkdir $kdatabase/open
-	gocryptfs -scryptn 21 -init $kdatabase/closed
-	gocryptfs $kdatabase/closed $kdatabase/open
-	# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	mkdir $kdatabase/encrypted
+	mkdir /tmp/$kdbid
+	chmod 700 /tmp/$kdbid
+	gocryptfs -scryptn 21 -init $kdatabase/encrypted
+	gocryptfs $kdatabase/encrypted /tmp/$kdbid
+	# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	# on this commands, there should be some error preventing, but i don't care since i am the only person who uses this. implement it if you want more people to use it =)
 	
-	cd $kdatabase/open || exit 1
+	cd /tmp/$kdbid || exit 1
 	git init
 	git config --local user.name "self"
 	git config --local user.email ""
@@ -31,7 +34,7 @@ create() {
 	return 0
 }
 close() {
-	fusermount -u $kdatabase/open || return 1
+	fusermount -u /tmp/$kdbid || return 1
 	return 0
 }
 header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\tHASH\033[0m"; }
@@ -39,7 +42,7 @@ list() {
 	check
 	{
 		header
-		for file in $(ls $kdatabase/open/*); do 
+		for file in $(ls /tmp/$kdbid/*); do 
 			echo -ne "$(basename "$file")\t"
 			echo -n $(sed -n '2p' "$file")
 			echo -ne "\t$(sed -n '4p' "$file" | xargs -I{} date -I -d @{})"
@@ -66,7 +69,7 @@ list() {
 }
 list_menu() {
 	check
-	for file in $(ls $kdatabase/open/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
+	for file in $(ls /tmp/$kdbid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
@@ -76,14 +79,14 @@ genusername() {
 }
 generate() {
 	test -z "$@" && exit 1
-	test -e $kdatabase/open/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+	test -e /tmp/$kdbid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	title="$@"
 	login=$(genusername)
 	pass=$(genkey)
 	totp=$(head -c 10 /dev/urandom | base32)
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > $kdatabase/open/"$title"
-	cd $kdatabase/open
-	git add $kdatabase/open/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > /tmp/$kdbid/"$title"
+	cd /tmp/$kdbid
+	git add /tmp/$kdbid/"$title"
 	git commit -m 'generate()'
 	echo -e "\e[32m$title generated\e[0m"
 }
@@ -95,7 +98,7 @@ add() {
 		echo -e "\033[0;31mtitle shouldn't contain spaces\033[0m"
 		exit 1
 	}
-	test -e $kdatabase/open/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+	test -e /tmp/$kdbid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -en "login \033[90m(example: bogus@gmail.com)\033[0m: "; read -r login
 	echo -en "pass \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
 	echo ""
@@ -105,9 +108,9 @@ add() {
 	[ "$login" = "" ] && login=$(genusername)
 	[ "$pass" = "" ] && pass=$(genkey)
 
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > $kdatabase/open/"$title"
-	cd $kdatabase/open
-	git add $kdatabase/open/"$title"
+	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > /tmp/$kdbid/"$title"
+	cd /tmp/$kdbid
+	git add /tmp/$kdbid/"$title"
 	git commit -m 'add()'
 	echo -e "\e[32mentry added\e[0m"
 }
@@ -116,9 +119,9 @@ remove() {
 	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
 		read -p "are you sure you want to remove $found? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			rm $kdatabase/open/"$found"
-			cd $kdatabase/open
-			git add $kdatabase/open/"$found"
+			rm /tmp/$kdbid/"$found"
+			cd /tmp/$kdbid
+			git add /tmp/$kdbid/"$found"
 			git commit -m 'remove()'
 			echo -e "\e[32mremoved\e[0m"
 		} || {
@@ -129,22 +132,22 @@ remove() {
 edit() {
 	check
 	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
-		$EDITOR $kdatabase/open/"$found" 
-		cd $kdatabase/open
-		git add $kdatabase/open/"$found"
+		$EDITOR /tmp/$kdbid/"$found" 
+		cd /tmp/$kdbid
+		git add /tmp/$kdbid/"$found"
 		git commit -m 'edit()'
 	}
 }
 rename() {
 	check
 	found=$(get "$1" 1 1 | grep found: | sed 's/found: //') && {
-		test -e $kdatabase/open/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
+		test -e /tmp/$kdbid/"$2" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 		read -p "are you sure you want to rename $found -> $2 ? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
-			mv -v $kdatabase/open/"$found" $kdatabase/open/"$2"
-			cd $kdatabase/open
-			git add $kdatabase/open/"$found"
-			git add $kdatabase/open/"$2"
+			mv -v /tmp/$kdbid/"$found" /tmp/$kdbid/"$2"
+			cd /tmp/$kdbid
+			git add /tmp/$kdbid/"$found"
+			git add /tmp/$kdbid/"$2"
 			git commit -m 'rename()'
 		} || {
 			echo -e "\033[0;31mcanceled\033[0m"
@@ -171,10 +174,10 @@ get() {
 
 	# (?) search for a entry name that matches
 	
-    candidates=$(ls $kdatabase/open | grep -i "$1") && {
+    candidates=$(ls /tmp/$kdbid | grep -i "$1") && {
 	    test $(echo "$candidates" | wc -l) -eq 1 && {
 	    	echo "found: $candidates"
-	    	_return="$(sed -n "${2},${3}p" $kdatabase/open/"$candidates")"
+	    	_return="$(sed -n "${2},${3}p" /tmp/$kdbid/"$candidates")"
 	    	test "$3" = '$' && { print_note "$(echo "$_return" | fold -s)"; } || echo "$_return"
 	   	    return 0
 	    } || {
@@ -189,7 +192,7 @@ if closest_match:
     print(closest_match[0])
 	")
 		        echo "found: $closest"
-		        _return="$(sed -n "${2},${3}p" $kdatabase/open/"$closest")"
+		        _return="$(sed -n "${2},${3}p" /tmp/$kdbid/"$closest")"
 		        test "$3" = '$' && { print_note "$(echo -e "$_return" | fold -s)"; } || echo "$_return"
 		        return 0
 		    fi
@@ -202,7 +205,7 @@ if closest_match:
 	
 	# (?) then, if nothing found, search for a matching password or entry content
 	
-    found=$(grep -irl "$1" $kdatabase/open/*  | head -n1)
+    found=$(grep -irl "$1" /tmp/$kdbid/*  | head -n1)
     echo "found: $(basename $found)"
 	_return="$(sed -n "${2},${3}p" $found)"
     test "$3" = '$' && { 
@@ -216,7 +219,7 @@ get_by_hash() {
 	# i wanted to add this, but then you cannot write ONLY the beginning of a hash, like "78f" instead of "78fa1"
 	# [[ ${#1} -eq 5 ]] && echo "True" || echo "False"
 	
-	for file in $kdatabase/open/*; do
+	for file in /tmp/$kdbid/*; do
 	    if [ -f "$file" ]; then
 	        hash=$(md5sum "$file" | head -c 5)
 			
@@ -274,8 +277,16 @@ test_db_exists() {
 exportdb() {
 	test -z "$1" && exit 1
 	test_db_exists || exit 1
-	tar -cf "$1".tgz -C $kdatabase/closed . && {
-		echo "exported database at $1"
+	if [ -f "$1".tgz ]; then
+	    read -p "$1.tgz already exists, do you want to replace it? (y/n) " choice
+	    case "$choice" in 
+	      y|Y ) echo -e "\e[32mreplacing the existing file...\e[0m";;
+	      n|N ) echo -e "\033[0;31mcanceled\033[0m"; exit 1;;
+	      * ) echo -e "\033[0;31mcanceled\033[0m"; exit 1;;
+	    esac
+	fi
+	tar -cf "$1".tgz -C $kdatabase/encrypted . && {
+		echo "exported database at $1.tgz"
 		exit 0
 	}
 	exit 1
@@ -287,9 +298,9 @@ importdb() {
 		exit 1
 	}
 
-	mkdir -p $kdatabase/closed
-	tar -xf "$1" -C $kdatabase/closed && {
-		mkdir $kdatabase/open
+	mkdir -p $kdatabase/encrypted
+	tar -xf "$1" -C $kdatabase/encrypted && {
+		mkdir /tmp/$kdbid
 		echo "imported database to $kdatabase, open with 'k open'"
 		exit 0
 	}
@@ -299,7 +310,7 @@ exportraw() {
 	echo -ne "\033[0;33mCAREFUL: THIS WILL EXPORT YOUR DATABASE WITHOUT ENCRYPTION, DO YOU WANT TO CONTINUE? (y/n): \033[0m"
 	read r
 	[[ $r =~ ^(Y|y|yes)$ ]] && { 
-		tar -cf "$1".tgz -C $kdatabase/open . && {
+		tar -cf "$1".tgz -C /tmp/$kdbid . && {
 			echo "exported raw database at $1"
 			exit 0
 		}
@@ -317,9 +328,9 @@ usage() {
 \033[1madd\033[0m: 
   adds a new entry
 \033[1mremove\033[0m: 
-  removes an entry
+  removes an entry, searching by entry name, login, password, hash or else
 \033[1medit\033[0m: 
-  allows editing an existing entry
+  allows editing an existing entry, searching by entry name, login, password, hash or else
 \033[1mrename/move\033[0m: 
   renames an existing entry
 \033[1mlogin\033[0m: 
@@ -333,17 +344,19 @@ usage() {
 \033[1mgenerate\033[0m: 
   creates a new random generated entry (requires argument) 
 \033[1mgen\033[0m: 
-  generates a user and password
+  without adding a entry to the databse, generates a user and/or password
 \033[1mopen\033[0m: 
-  opens the encrypted database
+  opens the encrypted database (which is mounted in /tmp/$kdbid)
 \033[1mclose\033[0m: 
-  closes the encrypted database
+  closes the database (which is mounted in /tmp/$kdbid)
 \033[1mexport\033[0m: 
-  exports the existing database (which location specified in \$kdatabase)
+  exports the existing database (with current encryption) (which location specified in \$kdatabase)
 \033[1mimport\033[0m: 
   imports a exported database in .tgz format into the current \$kdatabase location
-\033[1mexport\033[0m: 
-  exports the existing database WITHOUT ENCRYPTION, only for testing (which location specified in \$kdatabase)"
+\033[1mexportraw\033[0m: 
+  exports the existing database WITHOUT ENCRYPTION, only for testing (which location specified in \$kdatabase)
+\033[1mbackup\033[0m: 
+  a simple command without parameters that will export your database (encrypted) in \$kdatabase/backup.tgz)"
 }
 
 test -z $kdatabase && {
@@ -356,7 +369,7 @@ test "$1" != "import" && {
 	test_db_exists || exit 1
 } 
 
-kdatabaseid=$(echo $kdatabase | b2sum | cut -b1-8)-$(basename $kdatabase)
+kdbid=$(basename $kdatabase).kdb.$(echo $kdatabase | b2sum | cut -b1-8)
 
 case "$1" in
 	"check") check;;
@@ -380,5 +393,6 @@ case "$1" in
 	"export") exportdb "$2";;
 	"import") importdb "$2";;
 	"exportraw") exportraw "$2";;
+	"backup") exportdb "$kdatabase"/backup;;
 	*) usage; exit 2;;
 esac
