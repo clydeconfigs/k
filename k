@@ -75,16 +75,30 @@ genkey() {
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
 }
 genusername() {
-	awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'
+    python -c "
+import random
+
+def generate_sequence(length):
+    consonants = list('bdfghjklmnpqrstvwxz') * 3 + ['sn', 'sp', 'sk', 'st', 'kr', 'tr', 'gr', 'dr', 'pr', 'fr']
+    vowels = 'aeiou'
+    sequence = []
+    for i in range(length):
+        if i % 2 == 0:
+            sequence.append(random.choice(consonants))
+        else:
+            sequence.append(random.choice(vowels))
+    return ''.join(sequence)
+
+length = 6
+print(generate_sequence(length) + str(random.randint(10, 99)))
+" | tr -d '\n'
 }
 generate() {
 	test -z "$@" && exit 1
 	test -e /tmp/$kdbid/"$1" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	title="$@"
-	login=$(genusername)
 	pass=$(genkey)
-	totp=$(head -c 10 /dev/urandom | base32)
-	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > /tmp/$kdbid/"$title"
+	echo -e "$pass\n\n\n$(date +"%s")\n\n\n\n\n" > /tmp/$kdbid/"$title"
 	cd /tmp/$kdbid
 	git add /tmp/$kdbid/"$title"
 	git commit -m 'generate()'
@@ -389,7 +403,7 @@ case "$1" in
 	"note") get "$2" 10 "\$";;
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
-	"gen") genusername; echo; genkey; echo;;
+	"gen") genusername; echo; genkey; echo; head -c 10 /dev/urandom | base32;;
 	"export") exportdb "$2";;
 	"import") importdb "$2";;
 	"exportraw") exportraw "$2";;
