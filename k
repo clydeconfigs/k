@@ -16,6 +16,8 @@ open() {
 	return 0
 }
 create() {
+echo -e "$(logo "k: DATABASE CREATION")
+"
 	mkdir $kdatabase
 	chmod 700 $kdatabase
 	mkdir $kdatabase/encrypted
@@ -331,46 +333,54 @@ exportraw() {
 	}
 	exit 1
 }
-
+logo() {
+    local str_length=${#1}
+    local width=$(tput cols)
+    local space_length=$((width - str_length - 5))
+    echo -e "
+\e[44m $1$(printf "%-${space_length}s" "" | tr ' ' ' ')\e[0m\n"
+}
 usage() {
-	echo -e "\033[1mlist\033[0m: 
-  lists all entries (list_abc or list_menu for alphabetical order)
-\033[1mcreate\033[0m: 
-  creates a new encrypted database
-\033[1mcopy\033[0m: 
-  copies the password of a specific entry to the clipboard
-\033[1madd\033[0m: 
-  adds a new entry
-\033[1mremove\033[0m: 
-  removes an entry, searching by entry name, login, password, hash or else
-\033[1medit\033[0m: 
-  allows editing an existing entry, searching by entry name, login, password, hash or else
-\033[1mrename/move\033[0m: 
-  renames an existing entry
-\033[1mlogin\033[0m: 
-  retrieves the login username for a specific entry
-\033[1mpass/get\033[0m: 
-  retrieves the password for a specific entry, searching by entry name, login, password, hash or else
-\033[1mnote\033[0m: 
-  retrieves the plain text note for a specific entry, searching by entry name, login, password, hash or else
-\033[1mhash\033[0m: 
-  retrieves the password for a specific entry, searching by hash exclusively
-\033[1mgenerate\033[0m: 
-  creates a new random generated entry (requires argument) 
-\033[1mgen\033[0m: 
-  without adding a entry to the databse, generates a user and/or password
-\033[1mopen\033[0m: 
-  opens the encrypted database (which is mounted in /tmp/$kdbid)
-\033[1mclose\033[0m: 
-  closes the database (which is mounted in /tmp/$kdbid)
-\033[1mexport\033[0m: 
-  exports the existing database (with current encryption) (which location specified in \$kdatabase)
-\033[1mimport\033[0m: 
-  imports a exported database in .tgz format into the current \$kdatabase location
-\033[1mexportraw\033[0m: 
-  exports the existing database WITHOUT ENCRYPTION, only for testing (which location specified in \$kdatabase)
-\033[1mbackup\033[0m: 
-  a simple command without parameters that will export your database (encrypted) in \$kdatabase/backup.tgz)"
+	echo -e "$(logo "k: HELP")
+"
+
+bold="\033[1m"
+reset="\033[0m"
+
+echo -e "${bold}list${reset}:                                      ${bold}generate${reset}:                                
+  lists all entries (list_abc or             creates a new random generated entry 
+list_menu for alphabetical order)          (requires argument) 
+${bold}create${reset}:                                    ${bold}gen${reset}: 
+  creates a new encrypted database           without adding a entry to the 
+${bold}copy${reset}:                                      databse, generates a user and/or 
+  copies the password of a specific        password
+entry to the clipboard                     ${bold}open${reset}: 
+${bold}add${reset}:                                         opens the encrypted database (which 
+  adds a new entry                         is mounted in /tmp/)
+${bold}remove${reset}:                                    ${bold}close${reset}: 
+  removes an entry, searching by entry       closes the database (which is mounted 
+name, login, password, hash or else        in /tmp/)
+${bold}edit${reset}:                                      ${bold}export${reset}: 
+  allows editing an existing entry,          exports the existing database (with 
+searching by entry name, login,            current encryption) (which location 
+password, hash or else                     specified in $kdatabase)
+${bold}rename/move${reset}:                               ${bold}import${reset}: 
+  renames an existing entry                  imports a exported database in .tgz 
+${bold}login${reset}:                                     format into the current $kdatabase 
+  retrieves the login username for a       location
+specific entry                             ${bold}exportraw${reset}: 
+${bold}pass/get${reset}:                                    exports the existing database WITHOUT 
+  retrieves the password for a specific    ENCRYPTION, only for testing (which 
+entry, searching by entry name, login,     location specified in $kdatabase)
+password, hash or else                     ${bold}backup: 
+${bold}note${reset}:                                        a simple command without parameters 
+  retrieves the plain text note for a      that will export your database 
+specific entry, searching by entry         (encrypted) in $kdatabase/backup.tgz)
+name, login, password, hash or else
+${bold}hash${reset}: 
+  retrieves the password for a specific 
+entry, searching by hash exclusively
+" | sed 's/^/  /g'
 }
 
 test -z $kdatabase && {
