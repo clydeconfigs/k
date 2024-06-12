@@ -388,12 +388,11 @@ test -z $kdatabase && {
 }
 
 kdatabase=$(echo -n $kdatabase | sed 's:/*$::')
+kdbid=$(basename $kdatabase).kdb.$(echo $kdatabase | b2sum | cut -b1-8)
 
 test "$1" != "import" && {
 	test_db_exists || exit 1
 } 
-
-kdbid=$(basename $kdatabase).kdb.$(echo $kdatabase | b2sum | cut -b1-8)
 
 case "$1" in
 	"check") check;;
