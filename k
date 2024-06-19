@@ -10,9 +10,14 @@ check() {
 	}
 }
 open() {
-	mkdir /tmp/$kdbid 2>/dev/null
+	test -e $kdatabase/UNENCRYPTED_DONT_DELETE_THIS && {
+		ln -s $kdatabase/encrypted /tmp/$kdbid
+		echo "ln -s $kdatabase/encrypted /tmp/$kdbid"
+	} || {
+		mkdir /tmp/$kdbid 2>/dev/null
+		gocryptfs $kdatabase/encrypted /tmp/$kdbid || return 1
+	}
 	chmod 700 /tmp/$kdbid
-	gocryptfs $kdatabase/encrypted /tmp/$kdbid || return 1
 	return 0
 }
 create() {
@@ -21,12 +26,22 @@ echo -e "$(logo "k: DATABASE CREATION")
 	mkdir $kdatabase
 	chmod 700 $kdatabase
 	mkdir $kdatabase/encrypted
-	mkdir /tmp/$kdbid
-	chmod 700 /tmp/$kdbid
-	gocryptfs -scryptn 21 -init $kdatabase/encrypted
-	gocryptfs $kdatabase/encrypted /tmp/$kdbid
-	# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	# on this commands, there should be some error preventing, but i don't care since i am the only person who uses this. implement it if you want more people to use it =)
+	
+	read -p "do you want to leave your database without encryption (not recommended)? (y/N): " r
+	[[ $r =~ ^(Y|y|yes)$ ]] && {
+		echo "encryption will not be used"
+		touch $kdatabase/UNENCRYPTED_DONT_DELETE_THIS
+		open
+	} || {
+		mkdir $kdatabase/encrypted
+		mkdir /tmp/$kdbid
+		chmod 700 /tmp/$kdbid
+
+		gocryptfs -scryptn 21 -init $kdatabase/encrypted
+		gocryptfs $kdatabase/encrypted /tmp/$kdbid
+		# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		# on this commands, there should be some error preventing, but i don't care since i am the only person who uses this. implement it if you want more people to use it =)
+	}	
 	
 	cd /tmp/$kdbid || exit 1
 	git init
@@ -36,7 +51,11 @@ echo -e "$(logo "k: DATABASE CREATION")
 	return 0
 }
 close() {
-	fusermount -u /tmp/$kdbid || return 1
+	test -e $kdatabase/UNENCRYPTED_DONT_DELETE_THIS && {
+		rm /tmp/$kdbid
+	} || {
+		fusermount -u /tmp/$kdbid || return 1
+	}
 	return 0
 }
 header() { echo -e "\033[1m\033[92mTITLE\tUSERNAME\tCREATION\tMODIFICATION\tHASH\033[0m"; }
