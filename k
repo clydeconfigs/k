@@ -15,9 +15,9 @@ open() {
 		echo "ln -s $kdatabase/encrypted /tmp/$kdbid"
 	} || {
 		mkdir /tmp/$kdbid 2>/dev/null
+		chmod 700 /tmp/$kdbid
 		gocryptfs $kdatabase/encrypted /tmp/$kdbid || return 1
 	}
-	chmod 700 /tmp/$kdbid
 	return 0
 }
 create() {
@@ -320,7 +320,7 @@ exportdb() {
 	      * ) echo -e "\033[0;31mcanceled\033[0m"; exit 1;;
 	    esac
 	fi
-	tar -cf "$1".tgz -C $kdatabase/encrypted . && {
+	tar -czf "$1".tgz -C $kdatabase/encrypted . && {
 		echo "exported database at $1.tgz"
 		exit 0
 	}
@@ -345,7 +345,7 @@ exportraw() {
 	echo -ne "\033[0;33mCAREFUL: THIS WILL EXPORT YOUR DATABASE WITHOUT ENCRYPTION, DO YOU WANT TO CONTINUE? (y/n): \033[0m"
 	read r
 	[[ $r =~ ^(Y|y|yes)$ ]] && { 
-		tar -cf "$1".tgz -C /tmp/$kdbid . && {
+		tar -czf "$1".tgz -C /tmp/$kdbid . && {
 			echo "exported raw database at $1"
 			exit 0
 		}
