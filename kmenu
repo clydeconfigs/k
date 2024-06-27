@@ -6,8 +6,15 @@
 #
 
 # example usage: 
-# $ kmenu "rofi -dmenu"
-# $ kmenu dmenu
+#
+# for rofi users:
+# kmenu "rofi -dmenu"
+#
+# for dmenu users:
+# kmenu
+#
+# add it to your keyboard shortcut configs, and use kmenu!
+#
 
 menu=$1
 test -z $1 && menu="dmenu"
@@ -47,59 +54,39 @@ enter_prompt() {
     esac
 }
 
-{
+type_string() {
+    local str=$1
+    for (( i=0; i<${#str}; i++ )); do
+        char="${str:$i:1}"
+        xdotool type "$char"
+    done
+}
+
 case $choice in
     "login+password")
-        for (( i=0; i<${#login}; i++ )); do
-            char="${login:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$login"
         sleep 0.05
         xdotool key Tab
         sleep 0.05
-        for (( i=0; i<${#password}; i++ )); do
-            char="${password:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$password"
         enter_prompt
         ;;
     "login[pause]password")
-        for (( i=0; i<${#login}; i++ )); do
-            char="${login:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$login"
         sleep 0.05
         xdotool key Enter
         echo "wait until done and continue" | $menu || exit 1
-        for (( i=0; i<${#password}; i++ )); do
-            char="${password:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$password"
         enter_prompt
         ;;
     "password")
-        for (( i=0; i<${#password}; i++ )); do
-            char="${password:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$password"
         enter_prompt
         ;;
     "login")
-        for (( i=0; i<${#login}; i++ )); do
-            char="${login:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$login"
         ;;
     "totp")
-        for (( i=0; i<${#totp}; i++ )); do
-            char="${totp:$i:1}"
-            xdotool type "$char"
-        done
+        type_string "$totp"
         ;;
 esac
-
-# notify-send "done typing, you may press enter"
-
-} &
-
-
