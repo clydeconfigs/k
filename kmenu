@@ -43,8 +43,9 @@ entrytitle=$(echo "$titles" | sed -n ${entry}p)
 login=$(echo "$logins" | sed -n ${entry}p)
 password=$(k get "$entrytitle" | tail -n1)
 totp=$(k totp "$entrytitle" | tail -n1)
+key=$(k key "$entrytitle" | tail -n1)
 
-choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nlogin[pause]password" | $menu) || exit 1
+choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nkey\nlogin[pause]password" | $menu) || exit 1
 
 enter_prompt() {
     continue=$(echo -e "press enter\ncancel" | rofi -dmenu)
@@ -88,5 +89,8 @@ case $choice in
         ;;
     "totp")
         type_string "$totp"
+        ;;
+    "key")
+        type_string "$key"
         ;;
 esac

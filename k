@@ -414,6 +414,7 @@ test "$1" != "import" && {
 } 
 
 case "$1" in
+	"get-dev") get "$2" "$3" "$4";;
 	"check") check;;
 	"open") open;;
 	"close") close;;
@@ -428,7 +429,7 @@ case "$1" in
 	"pass") get "$2" 1 1;;"get") get "$2" 1 1;;
 	"hash") get_by_hash "$2";;
 	"login") get "$2" 2 2;;
-	"note") get "$2" 10 "\$";;
+	"key") get "$2" 5 5;;
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
 	"gen") genusername; echo; genkey; echo; head -c 10 /dev/urandom | base32;;
