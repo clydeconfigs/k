@@ -2,12 +2,12 @@
 
 #
 # CC BY-NC-SA 4.0 Deed 
-# k_menu for k password manager, a work by clyde
+# kmenu for k password manager, a work by clyde
 #
 
 # example usage: 
-# $ k_menu "rofi -dmenu"
-# $ k_menu dmenu
+# $ kmenu "rofi -dmenu"
+# $ kmenu dmenu
 
 menu=$1
 test -z $1 && menu="dmenu"
@@ -22,7 +22,7 @@ test -z $kdatabase && {
 kdbid=$(basename $kdatabase).kdb.$(echo $kdatabase | b2sum | cut -b1-8)
 
 test -z "$(ls -A /tmp/"$kdbid")" && {
-    st -e k open
+    xfce4-terminal --hide-menubar --hide-scrollbar -e "k open"
 }
 
 titles=$(k list_menu | awk -F $'\t' '{print $1}')
@@ -61,6 +61,7 @@ case $choice in
             char="${password:$i:1}"
             xdotool type "$char"
         done
+        enter_prompt
         ;;
     "login[pause]password")
         for (( i=0; i<${#login}; i++ )); do

@@ -11,8 +11,8 @@ check() {
 }
 open() {
 	test -e $kdatabase/UNENCRYPTED_DONT_DELETE_THIS && {
-		ln -s $kdatabase/encrypted /tmp/$kdbid
-		echo "ln -s $kdatabase/encrypted /tmp/$kdbid"
+		ln -s "$(realpath $kdatabase)"/encrypted /tmp/$kdbid
+		echo "ln -s "$(realpath $kdatabase)"/encrypted /tmp/$kdbid"
 	} || {
 		mkdir /tmp/$kdbid 2>/dev/null
 		chmod 700 /tmp/$kdbid
