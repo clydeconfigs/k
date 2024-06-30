@@ -432,6 +432,7 @@ case "$1" in
 	"key") get "$2" 5 5;;
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
+	"note") get "$2" 10 "\$";;
 	"gen") genusername; echo; genkey; echo; head -c 10 /dev/urandom | base32;;
 	"export") exportdb "$2";;
 	"import") importdb "$2";;
