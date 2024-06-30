@@ -45,7 +45,7 @@ password=$(k get "$entrytitle" | tail -n1)
 totp=$(k totp "$entrytitle" | tail -n1)
 key=$(k key "$entrytitle" | tail -n1)
 
-choice=$(echo -e "password\nlogin+password\nlogin\ntotp\nkey\nlogin[pause]password" | $menu) || exit 1
+choice=$(echo -e "password\nlogin[enter]password\nlogin[tab]password\nlogin\ntotp\nkey" | $menu) || exit 1
 
 enter_prompt() {
     continue=$(echo -e "press enter\ncancel" | rofi -dmenu)
@@ -64,7 +64,7 @@ type_string() {
 }
 
 case $choice in
-    "login+password")
+    "login[tab]password")
         type_string "$login"
         sleep 0.05
         xdotool key Tab
@@ -72,7 +72,7 @@ case $choice in
         type_string "$password"
         enter_prompt
         ;;
-    "login[pause]password")
+    "login[enter]password")
         type_string "$login"
         sleep 0.05
         xdotool key Enter
