@@ -94,9 +94,9 @@ list_menu() {
 }
 genkey() {
 	random_char=$(case $(( $RANDOM % 3 )) in
-	  1) echo '%' ;;
-	  2) echo '&' ;;
-	  3) echo '@' ;;
+	  0) echo '%' ;;
+	  1) echo '&' ;;
+	  2) echo '@' ;;
 	esac)
 	echo -n "${random_char}K"
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
