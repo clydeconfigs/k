@@ -93,6 +93,12 @@ list_menu() {
 	for file in $(ls /tmp/$kdbid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
+	random_char=$(case $(( $RANDOM % 4 )) in
+	  1) echo '%' ;;
+	  2) echo '&' ;;
+	  3) echo '@' ;;
+	esac)
+	echo -n "${random_char}K"
 	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
 }
 genusername() {
