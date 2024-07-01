@@ -93,7 +93,7 @@ list_menu() {
 	for file in $(ls /tmp/$kdbid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
-	random_char=$(case $(( $RANDOM % 4 )) in
+	random_char=$(case $(( $RANDOM % 3 )) in
 	  1) echo '%' ;;
 	  2) echo '&' ;;
 	  3) echo '@' ;;
