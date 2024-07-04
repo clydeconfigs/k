@@ -315,6 +315,19 @@ test_db_exists() {
 	}
 	return 0
 }
+create_backup() {
+	mkdir "$kdatabase"/backups 2>/dev/null
+	i=1
+	while true; do
+	  file="$kdatabase"/backups/backup$i.tgz
+	  if [ ! -f "$file" ]; then
+	    exportdb "$kdatabase"/backups/backup$i
+	    echo "backup saved as $file.tgz"
+	    break
+	  fi
+	  ((i++))
+	done
+}
 exportdb() {
 	test -z "$1" && exit 1
 	test_db_exists || exit 1
@@ -443,6 +456,6 @@ case "$1" in
 	"export") exportdb "$2";;
 	"import") importdb "$2";;
 	"exportraw") exportraw "$2";;
-	"backup") exportdb "$kdatabase"/backup;;
+	"backup") create_backup;;
 	*) usage; exit 2;;
 esac
