@@ -133,12 +133,16 @@ generate() {
 }
 add() {
 	check
-	title="$1"
-	echo -en "title \033[90m(example: google_account)\033[0m: "; read -r title
+	test -n "$1" && {
+		title="$1"
+	} || {
+		echo -en "title \033[90m(example: google_account)\033[0m: "; read -r title
+	}
 	echo "$title" | grep " " && {
 		echo -e "\033[0;31mtitle shouldn't contain spaces\033[0m"
 		exit 1
 	}
+	
 	test -e /tmp/$kdbid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -en "login \033[90m(example: bogus@gmail.com)\033[0m: "; read -r login
 	echo -en "pass \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
