@@ -5,19 +5,7 @@
 # kmenu for k password manager, a work by clyde
 #
 
-# example usage: 
-#
-# for rofi users:
-# kmenu "rofi -dmenu"
-#
-# for dmenu users:
-# kmenu
-#
-# add it to your keyboard shortcut configs, and use kmenu!
-#
-
-menu=$1
-test -z $1 && menu="dmenu"
+menu="rofi -dmenu"
 
 # uncomment if you use this computer in public:
 # main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
@@ -35,7 +23,7 @@ test -z "$(ls -A /tmp/"$kdbid")" && {
 titles=$(k list_menu | awk -F $'\t' '{print $1}')
 logins=$(k list_menu | awk -F $'\t' '{print $2}')
 
-entry=$(k list_menu | awk -F $'\t' '{print $1" "$2}' | nl -s '. ' -w 1 | $menu | awk -F '.' '{print $1}')
+entry=$(k list_menu | awk -F $'\t' '{print $1" "$2}' | nl -s '. ' -w 1 | $menu -theme-str 'window {width: 40%;}' | awk -F '.' '{print $1}')
 
 test -z "$entry" && exit 1
 
@@ -48,7 +36,7 @@ key=$(k key "$entrytitle" | tail -n1)
 choice=$(echo -e "password\nlogin[enter]password\nlogin[tab]password\nlogin\ntotp\nkey" | $menu) || exit 1
 
 enter_prompt() {
-    continue=$(echo -e "press enter\ncancel" | rofi -dmenu)
+    continue=$(echo -e "press enter\ncancel" | $menu -p "(" -theme-str 'window {width: 8%;}')
     case "$continue" in
         "press enter") sleep 0.3; xdotool key Return;;
         "cancel") exit 1;;
@@ -76,7 +64,7 @@ case $choice in
         type_string "$login"
         sleep 0.05
         xdotool key Enter
-        echo "wait until done and continue" | $menu || exit 1
+        echo "wait until done and continue" | $menu -theme-str 'window {width: 18%;}' || exit 1
         type_string "$password"
         enter_prompt
         ;;
