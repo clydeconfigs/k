@@ -93,13 +93,7 @@ list_menu() {
 	for file in $(ls /tmp/$kdbid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
-	random_char=$(case $(( $RANDOM % 3 )) in
-	  0) echo '%' ;;
-	  1) echo '&' ;;
-	  2) echo '@' ;;
-	esac)
-	echo -n "${random_char}K"
-	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 40
+	tr -dc \[:graph:\] </dev/urandom | head -c 15
 }
 genusername() {
     python -c "
@@ -456,7 +450,7 @@ case "$1" in
 	"totp") totp "$2";;
 	"copy") copy "$2";;"c") copy "$2";;
 	"note") get "$2" 10 "\$";;
-	"gen") genusername; echo; genkey; echo; head -c 10 /dev/urandom | base32;;
+	"gen") echo "$(echo -en "username:\t"; genusername; echo; echo -en "password:\t"; genkey; echo; echo -en "TOTP key:\t"; head -c 10 /dev/urandom | base32)" | column --separator $'\t' -t;;
 	"export") exportdb "$2";;
 	"import") importdb "$2";;
 	"exportraw") exportraw "$2";;
