@@ -1,10 +1,6 @@
 #!/usr/bin/bash
 
 check() {
-	# 
-	# maybe check should just be inside open() ??? i don't know, man... i'll leave that for tomorrow
-	#
-	
 	test -z "$(ls -A "/tmp/$kdbid" 2>/dev/null)" && {
 		open || exit 1
 	}
