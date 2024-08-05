@@ -93,7 +93,7 @@ list_menu() {
 	for file in $(ls /tmp/$kdbid/*); do echo -en "$(basename "$file")\t"; echo -n $(sed -n '2p' "$file"); echo; done
 }
 genkey() {
-	tr -dc \[:graph:\] </dev/urandom | head -c 15
+	tr -dc [:lower:][:digit:] < /dev/urandom | head -c 20
 }
 genusername() {
     python -c "
@@ -278,6 +278,11 @@ copy() {
 	echo "$entry" | tail -n1 | tr -d '\n' | xclip -sel c
 	echo "$entry" | head -n1 | sed 's/^found:/copied:/'
 	echo -e "\033[0;33mCAREFUL: USING THE CLIPBOARD CAN MAKE ANY PROGRAM READ YOUR CREDENTIALS, THIS IN UNSAFE (FOR EXAMPLE IN ANY WEBSITE USING JAVASCRIPT). USE THIS ONLY WHEN STRICTLY NECESSARY\033[0m"
+	{
+		sleep 10
+		echo "fool" | xclip -sel c
+	} &
+	
 }
 totp() {
 	which=$(get "$1" 3 3)
