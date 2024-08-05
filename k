@@ -403,16 +403,16 @@ searching by entry name, login,            current encryption) (which location
 password, hash or else                     specified in $kdatabase)
 ${bold}rename/move${reset}:                               ${bold}import${reset}: 
   renames an existing entry                  imports a exported database in .tgz 
-${bold}login${reset}:                                     format into the current $kdatabase 
+${bold}login${reset}:                                     format into the current \$kdatabase 
   retrieves the login username for a       location
 specific entry                             ${bold}exportraw${reset}: 
 ${bold}pass/get${reset}:                                    exports the existing database WITHOUT 
   retrieves the password for a specific    ENCRYPTION, only for testing (which 
-entry, searching by entry name, login,     location specified in $kdatabase)
+entry, searching by entry name, login,     location specified in \$kdatabase)
 password, hash or else                     ${bold}backup: 
 ${bold}note${reset}:                                        a simple command without parameters 
   retrieves the plain text note for a      that will export your database 
-specific entry, searching by entry         (encrypted) in $kdatabase/backup.tgz)
+specific entry, searching by entry         (encrypted) in \$kdatabase/backup.tgz)
 name, login, password, hash or else
 ${bold}hash${reset}: 
   retrieves the password for a specific 
