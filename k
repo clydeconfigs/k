@@ -19,6 +19,13 @@ open() {
 create() {
 echo -e "$(logo "k: DATABASE CREATION")
 "
+	test -e $kdatabase && {
+		echo -e "\033[0;31ma directory already exists at $kdatabase\033[0m"
+		echo "\$kdatabase must be the full path to an empty directory where you want to create a kdb"
+		echo 
+		exit 1
+	}
+	
 	mkdir $kdatabase
 	chmod 700 $kdatabase
 	mkdir $kdatabase/encrypted
@@ -26,7 +33,7 @@ echo -e "$(logo "k: DATABASE CREATION")
 	read -p "do you want to leave your database without encryption (not recommended)? (y/N): " r
 	[[ $r =~ ^(Y|y|yes)$ ]] && {
 		echo "encryption will not be used"
-		touch $kdatabase/UNENCRYPTED_DONT_DELETE_THIS
+		touch $kdatabase/"UNENCRYPTED_DONT_DELETE_THIS" # important CONSTANT name, do NOT change
 		open
 	} || {
 		mkdir $kdatabase/encrypted
@@ -126,7 +133,7 @@ add() {
 	test -n "$1" && {
 		title="$1"
 	} || {
-		echo -en "title \033[90m(example: google_account)\033[0m: "; read -r title
+		echo -en "entry title \033[90m(example: gmail)\033[0m: "; read -r title
 	}
 	echo "$title" | grep " " && {
 		echo -e "\033[0;31mtitle shouldn't contain spaces\033[0m"
@@ -135,13 +142,32 @@ add() {
 	
 	test -e /tmp/$kdbid/"$title" && { echo -e "\033[0;31mentry with same title already exists\033[0m"; exit 1; }
 	echo -en "login \033[90m(example: bogus@gmail.com)\033[0m: "; read -r login
-	echo -en "pass \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
+	echo -en "password \033[90m(leave empty to auto-generate)\033[0m: "; read -sr pass
 	echo ""
 	echo -n "totp: "; read -sr totp
 	echo ""
+
+	auto=false
 	
 	[ "$login" = "" ] && login=$(genusername)
-	[ "$pass" = "" ] && pass=$(genkey)
+	[ "$pass" = "" ] && { 
+		pass=$(genkey)
+		auto=true
+	}
+
+	dpass="****"
+	if [ $auto = true ]; then
+		 dpass=$pass
+	fi
+	
+	echo ""
+	echo -e "
+TITLE\t$title
+LOGIN\t$login
+PASSWORD\t$dpass" | column -t
+	echo ""
+	echo -n "is this information correct? press enter to continue of ^C to cancel: "
+	read confirmation
 
 	echo -e "$pass\n$login\n$totp\n$(date +"%s")\n\n\n\n\n" > /tmp/$kdbid/"$title"
 	cd /tmp/$kdbid
@@ -304,8 +330,8 @@ print_note() {
 }
 test_db_exists() {
 	test -e $kdatabase || {
-		echo -e "\033[0;31mno database exists at $kdatabase\033[0m"
-		read -p "you can create one with \"k create\", do you want to continue? (y/n): " r
+		echo "no database exists at $kdatabase (this is good if you want to create a new one)"
+		read -p "do you want to create a new database? (y/n): " r
 		[[ $r =~ ^(Y|y|yes)$ ]] && { 
 			create
 			return 1
