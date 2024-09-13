@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-menu="rofi -dmenu"
+menu="rofi -dmenu -matching fuzzy"
 
 # uncomment if you use this computer in public:
 # main_menu=$(echo -e "continue" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
